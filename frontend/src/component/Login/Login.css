@@ -1,0 +1,105 @@
+/* 화면 전체를 어두운 다크 모드로 설정 */
+.login-full-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #1a1c23; /* 프로젝트 기본 배경색 */
+  margin: 0;
+}
+
+/* 중앙 로그인 카드 박스 */
+.login-card-box {
+  width: 100%;
+  max-width: 420px;
+  padding: 50px 40px;
+  text-align: center;
+}
+
+/* Fask 로고: 아주 크고 굵게 */
+.fask-main-logo {
+  font-size: 85px;
+  font-weight: 900;
+  color: #ffffff;
+  margin-bottom: 45px;
+  letter-spacing: -4px;
+}
+
+/* 폼 요소 간격 */
+.login-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 입력창 스타일 */
+.fask-input-field {
+  width: 100%;
+  padding: 16px;
+  background-color: #2d303e;
+  border: 1px solid #3f4451;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+/* 아이디 저장 체크박스 스타일 */
+.login-options {
+  text-align: left;
+  margin: 5px 0;
+}
+
+.remember-me {
+  color: #94a3b8;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 로그인 버튼: 강조된 흰색 */
+.fask-login-button {
+  width: 100%;
+  padding: 16px;
+  background-color: #ffffff;
+  color: #1a1c23;
+  border: none;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.2s;
+}
+
+.fask-login-button:hover {
+  background-color: #e2e8f0;
+}
+
+/* 하단 링크 (아이디 찾기 | 회원가입) */
+.login-sub-links {
+  margin-top: 35px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.login-sub-links span {
+  cursor: pointer;
+}
+
+.login-sub-links .signup-link {
+  color: #ffffff;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.login-sub-links .bar {
+  color: #3f4451;
+  cursor: default;
+}
