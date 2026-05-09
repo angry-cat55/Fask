@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const LoginPage = () => {
+const LoginPage = ({ onNavigateToSignup }) => {
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
 
@@ -16,7 +16,7 @@ const LoginPage = () => {
 
       const result = await response.json();
 
-      if (result.success) {
+      if (result.success) { 
         // 응답 데이터에서 nickname 추출
         alert(`${result.data.nickname}님 환영합니다!`);
       } else {
@@ -79,9 +79,13 @@ const LoginPage = () => {
               아이디 찾기
             </span>
             <span className="cursor-default text-slate-600">|</span>
-            <span className="cursor-pointer font-semibold text-white underline decoration-white/30 underline-offset-4 transition hover:decoration-white">
+            <button
+              type="button"
+              className="font-semibold text-white underline decoration-white/30 underline-offset-4 transition hover:decoration-white"
+              onClick={onNavigateToSignup}
+            >
               회원가입
-            </span>
+            </button>
           </div>
         </div>
       </div>
