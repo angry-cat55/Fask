@@ -5,12 +5,24 @@ import PrimaryButton from '../components/ui/PrimaryButton.jsx';
 const SignupPage = ({ onNavigateToLogin }) => {
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [email, setEmail] = useState('');
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSignup = async (e) => {
     e.preventDefault();
+
+    if(password !== confirmPassword) {
+      alert('비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+      return;
+    }
+
+    if(!password){
+      alert('비밀번호를 입력해주세요.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -31,6 +43,7 @@ const SignupPage = ({ onNavigateToLogin }) => {
         alert(`${result.data.nickname || loginId}님, 회원가입이 완료되었습니다!`);
         setLoginId('');
         setPassword('');
+        setConfirmPassword('');
         setEmail('');
         setNickname('');
       } else {
@@ -74,6 +87,21 @@ const SignupPage = ({ onNavigateToLogin }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
+            />
+            <TextInput
+              label="비밀번호 확인"
+              type="password"
+              placeholder="비밀번호를 입력하세요"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              autoComplete="new-password"
+              className={`w-full rounded-xl border bg-slate-900/70 px-4 py-4 text-base text-white placeholder:text-slate-400 outline-none transition focus:bg-slate-900 focus:ring-2 ${
+                confirmPassword === '' 
+                  ? 'border-white/10 focus:border-cyan-300/70 focus:ring-cyan-300/20'
+                  : confirmPassword === password
+                  ? 'border-green-400/70 focus:border-green-300/70 focus:ring-green-300/20'
+                  : 'border-red-400/70 focus:border-red-300/70 focus:ring-red-300/20'
+              }`}
             />
             <TextInput
               label="이메일"
