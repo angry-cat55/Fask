@@ -27,6 +27,7 @@ exports.signup = (req, res) => {
     success: true,
     data: {
       userId: 1, // 실제로는 데이터베이스에서 생성된 고유 ID를 반환해야 합니다.
+      nickname: nickname
     }
   });
 };
