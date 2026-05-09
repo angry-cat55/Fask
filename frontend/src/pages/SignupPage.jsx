@@ -9,17 +9,129 @@ const SignupPage = ({ onNavigateToLogin }) => {
   const [email, setEmail] = useState('');
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  // 유효성 검사 정규식
+  const validateLoginId = (value) => {
+    const regex = /^[a-zA-Z0-9_-]{4,20}$/;
+    return regex.test(value);
+  };
+
+  const validatePassword = (value) => {
+    const regex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*])[a-zA-Z\d!@#$%^&*]{8,20}$/;
+    return regex.test(value);
+  };
+
+  const validateEmail = (value) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(value);
+  };
+
+  const validateNickname = (value) => {
+    const regex = /^[가-힣a-zA-Z0-9]{2,10}$/;
+    return regex.test(value);
+  };
+
+  const handleBlur = (field, value) => {
+    const newErrors = { ...errors };
+
+    switch (field) {
+      case 'loginId':
+        if (!value.trim()) {
+          newErrors.loginId = '아이디를 입력해주세요.';
+        } else if (!validateLoginId(value)) {
+          newErrors.loginId = '아이디는 4-20자의 영문, 숫자, 특수문자(-, _)만 사용 가능합니다.';
+        } else {
+          delete newErrors.loginId;
+        }
+        break;
+      case 'password':
+        if (!value) {
+          newErrors.password = '비밀번호를 입력해주세요.';
+        } else if (!validatePassword(value)) {
+          newErrors.password = '비밀번호는 8-20자의 영문, 숫자, 특수문자를 포함해야 합니다.';
+        } else {
+          delete newErrors.password;
+        }
+        break;
+      case 'confirmPassword':
+        if (!value) {
+          newErrors.confirmPassword = '비밀번호 확인을 입력해주세요.';
+        } else if (value !== password) {
+          newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
+        } else {
+          delete newErrors.confirmPassword;
+        }
+        break;
+      case 'email':
+        if (!value.trim()) {
+          newErrors.email = '이메일을 입력해주세요.';
+        } else if (!validateEmail(value)) {
+          newErrors.email = '올바른 이메일 형식을 입력해주세요.';
+        } else {
+          delete newErrors.email;
+        }
+        break;
+      case 'nickname':
+        if (!value.trim()) {
+          newErrors.nickname = '닉네임을 입력해주세요.';
+        } else if (!validateNickname(value)) {
+          newErrors.nickname = '닉네임은 2-10자의 한글, 영문, 숫자만 사용 가능합니다.';
+        } else {
+          delete newErrors.nickname;
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+  }; 
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    // 아이디 검증
+    if (!loginId.trim()) {
+      newErrors.loginId = '아이디를 입력해주세요.';
+    } else if (!validateLoginId(loginId)) {
+      newErrors.loginId = '아이디는 4-20자의 영문, 숫자, 특수문자(-, _)만 사용 가능합니다.';
+    }
+
+    // 비밀번호 검증
+    if (!password) {
+      newErrors.password = '비밀번호를 입력해주세요.';
+    } else if (!validatePassword(password)) {
+      newErrors.password = '비밀번호는 8-20자의 영문, 숫자, 특수문자를 포함해야 합니다.';
+    }
+
+    // 비밀번호 확인 검증
+    if (!confirmPassword) {
+      newErrors.confirmPassword = '비밀번호 확인을 입력해주세요.';
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
+    }
+
+    // 이메일 검증
+    if (!email.trim()) {
+      newErrors.email = '이메일을 입력해주세요.';
+    } else if (!validateEmail(email)) {
+      newErrors.email = '올바른 이메일 형식을 입력해주세요.';
+    }
+
+    // 닉네임 검증
+    if (!nickname.trim()) {
+      newErrors.nickname = '닉네임을 입력해주세요.';
+    } else if (!validateNickname(nickname)) {
+      newErrors.nickname = '닉네임은 2-10자의 한글, 영문, 숫자만 사용 가능합니다.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSignup = async (e) => {
     e.preventDefault();
 
-    if(password !== confirmPassword) {
-      alert('비밀번호와 비밀번호 확인이 일치하지 않습니다.');
-      return;
-    }
-
-    if(!password){
-      alert('비밀번호를 입력해주세요.');
+    if (!validateForm()) {
       return;
     }
 
@@ -46,6 +158,7 @@ const SignupPage = ({ onNavigateToLogin }) => {
         setConfirmPassword('');
         setEmail('');
         setNickname('');
+        setErrors({});
       } else {
         alert(result.message || '회원가입에 실패했습니다.');
       }
@@ -78,7 +191,9 @@ const SignupPage = ({ onNavigateToLogin }) => {
               placeholder="사용할 아이디를 입력하세요"
               value={loginId}
               onChange={(e) => setLoginId(e.target.value)}
+              onBlur={(e) => handleBlur('loginId', e.target.value)}
               autoComplete="username"
+              error={errors.loginId}
             />
             <TextInput
               label="비밀번호"
@@ -86,7 +201,9 @@ const SignupPage = ({ onNavigateToLogin }) => {
               placeholder="비밀번호를 입력하세요"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onBlur={(e) => handleBlur('password', e.target.value)}
               autoComplete="new-password"
+              error={errors.password}
             />
             <TextInput
               label="비밀번호 확인"
@@ -94,7 +211,9 @@ const SignupPage = ({ onNavigateToLogin }) => {
               placeholder="비밀번호를 입력하세요"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              onBlur={(e) => handleBlur('confirmPassword', e.target.value)}
               autoComplete="new-password"
+              error={errors.confirmPassword}
               className={`w-full rounded-xl border bg-slate-900/70 px-4 py-4 text-base text-white placeholder:text-slate-400 outline-none transition focus:bg-slate-900 focus:ring-2 ${
                 confirmPassword === '' 
                   ? 'border-white/10 focus:border-cyan-300/70 focus:ring-cyan-300/20'
@@ -109,13 +228,17 @@ const SignupPage = ({ onNavigateToLogin }) => {
               placeholder="example@domain.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onBlur={(e) => handleBlur('email', e.target.value)}
               autoComplete="email"
+              error={errors.email}
             />
             <TextInput
               label="닉네임"
               placeholder="표시될 별명을 입력하세요"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
+              onBlur={(e) => handleBlur('nickname', e.target.value)}
+              error={errors.nickname}
             />
 
             <PrimaryButton type="submit" disabled={loading}>
