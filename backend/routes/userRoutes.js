@@ -6,7 +6,7 @@ const userController = require('../controllers/userController');
 // /api/users 요청을 userController의 signup 컨트롤러로 전달
 router.post('/', userController.signup);
 
-// 닉네임 중복 확인 요청 API
+// 로그인 아이디 중복 확인 요청 API
 // /api/users/check-username 요청을 userController의 checkUsername 컨트롤러로 전달
 router.get('/check-username', userController.checkUsername);
 
