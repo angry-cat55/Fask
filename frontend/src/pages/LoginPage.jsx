@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const LoginPage = ({ onNavigateToSignup }) => {
+const LoginPage = ({ onNavigateToSignup, onNavigateToFindId }) => {
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
 
@@ -16,7 +16,7 @@ const LoginPage = ({ onNavigateToSignup }) => {
 
       const result = await response.json();
 
-      if (result.success) { 
+      if (result.success) {
         // 응답 데이터에서 nickname 추출
         alert(`${result.data.nickname}님 환영합니다!`);
       } else {
@@ -75,9 +75,13 @@ const LoginPage = ({ onNavigateToSignup }) => {
           </form>
 
           <div className="mt-8 flex items-center justify-center gap-4 text-sm text-slate-400">
-            <span className="cursor-pointer transition hover:text-white">
+            <button
+              type="button"
+              className="cursor-pointer transition hover:text-white"
+              onClick={onNavigateToFindId}
+            >
               아이디 찾기
-            </span>
+            </button>
             <span className="cursor-default text-slate-600">|</span>
             <button
               type="button"
