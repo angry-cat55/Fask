@@ -191,6 +191,8 @@ const SignupPage = ({ onNavigateToLogin }) => {
         setEmail('');
         setNickname('');
         setErrors({});
+
+        onNavigateToLogin(); //로그인 페이지로 이동
       } else {
         alert(result.message || '회원가입에 실패했습니다.');
       }
@@ -241,7 +243,7 @@ const SignupPage = ({ onNavigateToLogin }) => {
                   onClick={checkDuplicateId}
                   // 로딩 중이거나 아이디가 비어있으면 클릭 방지
                   disabled={checkingId || !loginId}
-                  className="h-[56px] shrink-0 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-bold text-white transition hover:bg-white/10 active:scale-95 disabled:opacity-50"
+                  className="h-14 shrink-0 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-bold text-white transition hover:bg-white/10 active:scale-95 disabled:opacity-50"
                 >
                   {/* 텍스트를 '중복 확인'으로 고정 */}
                   중복 확인
