@@ -20,5 +20,5 @@ app.use('/api/auth', authRoutes); // /api/auth 경로로 들어오는 요청은 
 app.use('/api/users', userRoutes); // /api/users 경로로 들어오는 요청은 userRoutes에서 처리
 
 app.listen(PORT, () => {
-  console.log(`Backend server running on port ${PORT}`);
-})
+    console.log(`Backend server running on port ${PORT}`);
+});
