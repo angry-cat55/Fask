@@ -35,7 +35,8 @@ exports.signup = (req, res) => {
 
 exports.checkUsername = (req, res) => {
     // 클라이언트로부터 전달받은 로그인 아이디 추출
-    const { loginId } = req.query;
+    const { username } = req.query;
+    const loginId = username; // 클라이언트에서 전달된 username을 loginId로 사용
     
     // 로그인 아이디가 전달되었는지 확인
     if (!loginId) {
