@@ -91,3 +91,42 @@ exports.findId = (req, res) => {
         },
     });
 };
+
+exports.checkPassword = (req, res) => {
+    // 클라이언트로부터 전달받은 로그인 아이디와 이메일 추출
+    const { loginId, email } = req.body;
+
+    // 로그인 아이디가 전달되었는지 확인
+    if (!loginId) {
+        return res.status(400).json({
+            success: false,
+            message: '아이디 필드가 누락되었습니다.',
+        });
+    }
+
+    // 이메일이 전달되었는지 확인
+    if (!email) {
+        return res.status(400).json({
+            success: false,
+            message: '이메일 필드가 누락되었습니다.',
+        });
+    }
+
+    // 전달받은 값 로그로 출력
+    console.log('비밀번호 찾기 요청 로그인 아이디:', loginId);
+    console.log('비밀번호 찾기 요청 이메일:', email);
+
+    /*
+     * TODO: 실제 비밀번호 찾기 확인 로직 구현
+     * 1. 데이터베이스에서 loginId를 가진 사용자가 있는지 확인
+     * 2. 해당 사용자의 이메일과 전달받은 email이 일치하는지 확인
+     * 3. 일치하면 success: true 반환
+     * 4. 일치하지 않으면 success: false 반환
+     */
+
+    // 임시 응답: DB 연결 전이므로 항상 성공 처리
+    return res.status(200).json({
+        success: true,
+        message: '본인 확인이 완료되었습니다.',
+    });
+};
