@@ -12,6 +12,6 @@ router.get('/check-username', userController.checkUsername);
 
 // 로그인 아이디 찾기 요청 API
 // /api/users/find-id 요청을 userController의 findId 컨트롤러로 전달
-router.get('/find-id', userController.findId);
+router.post('/find-id', userController.findId);
 
 module.exports = router;
