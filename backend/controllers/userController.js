@@ -62,3 +62,32 @@ exports.checkUsername = (req, res) => {
         },
     });
 };
+
+exports.findId = (req, res) => {
+    //클라이언트로부터 전달받은 이메일 추출
+    const { email } = req.query;
+    
+    // 이메일이 전달되었는지 확인
+    if (!email) {
+        // 이메일이 없는 경우 400 Bad Request 응답 반환
+        return res.status(400).json({
+            success: false,
+            message: '이메일 필드가 누락되었습니다.',
+        });
+    }
+
+    // 전달받은 이메일 로그로 출력
+    console.log('아이디 찾기용 이메일:', email);
+
+    /*
+     * TODO: 실제 이메일을 사용하여 로그인 아이디를 찾는 로직 구현 (데이터베이스에서 해당 이메일을 가진 사용자의 loginId를 조회)
+     */
+
+    // 아이디 찾기 성공 시 200 OK 응답과 함께 결과 반환
+    return res.status(200).json({
+        success: true,
+        data: {
+            loginId: 'exampleUser', // 실제로는 데이터베이스에서 조회한 로그인 아이디를 반환해야 합니다.
+        },
+    });
+};
