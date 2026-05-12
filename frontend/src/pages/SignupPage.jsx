@@ -11,6 +11,10 @@ const SignupPage = ({ onNavigateToLogin }) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
+  // --- 추가된 상태: 중복 확인 여부 및 로딩 상태 ---
+  const [isIdChecked, setIsIdChecked] = useState(false);
+  const [checkingId, setCheckingId] = useState(false);
+
   // 유효성 검사 정규식
   const validateLoginId = (value) => {
     const regex = /^[a-zA-Z0-9_-]{4,20}$/;
@@ -30,6 +34,48 @@ const SignupPage = ({ onNavigateToLogin }) => {
   const validateNickname = (value) => {
     const regex = /^[가-힣a-zA-Z0-9]{2,10}$/;
     return regex.test(value);
+  };
+
+  // --- 추가된 함수: 아이디 중복 확인 API 호출 ---
+  const checkDuplicateId = async () => {
+    if (!loginId.trim()) {
+      setErrors(prev => ({ ...prev, loginId: '아이디를 입력해주세요.' }));
+      return;
+    }
+    if (!validateLoginId(loginId)) {
+      setErrors(prev => ({ ...prev, loginId: '아이디 형식이 올바르지 않습니다.' }));
+      return;
+    }
+
+    setCheckingId(true);
+    try {
+      const response = await fetch(`/api/users/check-username?username=${encodeURIComponent(loginId)}`);
+      
+      if (!response.ok) throw new Error('서버 통신 오류');
+
+      const result = await response.json();
+
+      if (result.success) {
+        if (result.data.isDuplicated) {
+          setErrors(prev => ({ ...prev, loginId: '이미 사용 중인 아이디입니다.' }));
+          setIsIdChecked(false);
+        } else {
+          alert('사용 가능한 아이디입니다.');
+          setIsIdChecked(true);
+          setErrors(prev => {
+            const { loginId: _, ...rest } = prev;
+            return rest;
+          });
+        }
+      } else {
+        alert(result.message || '확인에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('중복 확인 중 오류:', error);
+      alert('중복 확인 서버 통신 중 오류가 발생했습니다.');
+    } finally {
+      setCheckingId(false);
+    }
   };
 
   const handleBlur = (field, value) => {
@@ -89,40 +135,20 @@ const SignupPage = ({ onNavigateToLogin }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    // 아이디 검증
-    if (!loginId.trim()) {
-      newErrors.loginId = '아이디를 입력해주세요.';
-    } else if (!validateLoginId(loginId)) {
-      newErrors.loginId = '아이디는 4-20자의 영문, 숫자, 특수문자(-, _)만 사용 가능합니다.';
-    }
+    if (!loginId.trim()) newErrors.loginId = '아이디를 입력해주세요.';
+    else if (!validateLoginId(loginId)) newErrors.loginId = '아이디 형식이 올바르지 않습니다.';
 
-    // 비밀번호 검증
-    if (!password) {
-      newErrors.password = '비밀번호를 입력해주세요.';
-    } else if (!validatePassword(password)) {
-      newErrors.password = '비밀번호는 8-20자의 영문, 숫자, 특수문자를 포함해야 합니다.';
-    }
+    if (!password) newErrors.password = '비밀번호를 입력해주세요.';
+    else if (!validatePassword(password)) newErrors.password = '비밀번호 형식이 올바르지 않습니다.';
 
-    // 비밀번호 확인 검증
-    if (!confirmPassword) {
-      newErrors.confirmPassword = '비밀번호 확인을 입력해주세요.';
-    } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
-    }
+    if (!confirmPassword) newErrors.confirmPassword = '비밀번호 확인을 입력해주세요.';
+    else if (password !== confirmPassword) newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
 
-    // 이메일 검증
-    if (!email.trim()) {
-      newErrors.email = '이메일을 입력해주세요.';
-    } else if (!validateEmail(email)) {
-      newErrors.email = '올바른 이메일 형식을 입력해주세요.';
-    }
+    if (!email.trim()) newErrors.email = '이메일을 입력해주세요.';
+    else if (!validateEmail(email)) newErrors.email = '이메일 형식이 올바르지 않습니다.';
 
-    // 닉네임 검증
-    if (!nickname.trim()) {
-      newErrors.nickname = '닉네임을 입력해주세요.';
-    } else if (!validateNickname(nickname)) {
-      newErrors.nickname = '닉네임은 2-10자의 한글, 영문, 숫자만 사용 가능합니다.';
-    }
+    if (!nickname.trim()) newErrors.nickname = '닉네임을 입력해주세요.';
+    else if (!validateNickname(nickname)) newErrors.nickname = '닉네임 형식이 올바르지 않습니다.';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -131,7 +157,11 @@ const SignupPage = ({ onNavigateToLogin }) => {
   const handleSignup = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    if (!validateForm()) return;
+
+    // --- 추가: 회원가입 전 중복 확인 체크 ---
+    if (!isIdChecked) {
+      alert('아이디 중복 확인을 먼저 완료해주세요.');
       return;
     }
 
@@ -146,14 +176,16 @@ const SignupPage = ({ onNavigateToLogin }) => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`서버 오류: ${response.status} ${response.statusText} - ${errorText}`);
+        throw new Error(`서버 오류: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
 
       if (result.success) {
         alert(`${result.data.nickname || loginId}님, 회원가입이 완료되었습니다!`);
+        // 필드 초기화
         setLoginId('');
+        setIsIdChecked(false);
         setPassword('');
         setConfirmPassword('');
         setEmail('');
@@ -186,15 +218,40 @@ const SignupPage = ({ onNavigateToLogin }) => {
           </p>
 
           <form className="flex flex-col gap-4" onSubmit={handleSignup}>
-            <TextInput
-              label="아이디"
-              placeholder="사용할 아이디를 입력하세요"
-              value={loginId}
-              onChange={(e) => setLoginId(e.target.value)}
-              onBlur={(e) => handleBlur('loginId', e.target.value)}
-              autoComplete="username"
-              error={errors.loginId}
-            />
+            
+            {/* --- 아이디 입력창 + 중복 확인 버튼 --- */}
+            <div className="relative flex flex-col gap-2">
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <TextInput
+                    label="아이디"
+                    placeholder="사용할 아이디를 입력하세요"
+                    value={loginId}
+                    onChange={(e) => {
+                      setLoginId(e.target.value);
+                      setIsIdChecked(false); // 아이디 수정 시 중복 확인 리셋
+                    }}
+                    onBlur={(e) => handleBlur('loginId', e.target.value)}
+                    autoComplete="username"
+                    error={errors.loginId}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={checkDuplicateId}
+                  // 로딩 중이거나 아이디가 비어있으면 클릭 방지
+                  disabled={checkingId || !loginId}
+                  className="h-[56px] shrink-0 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-bold text-white transition hover:bg-white/10 active:scale-95 disabled:opacity-50"
+                >
+                  {/* 텍스트를 '중복 확인'으로 고정 */}
+                  중복 확인
+                </button>
+              </div>
+              {isIdChecked && !errors.loginId && (
+                <p className="ml-1 text-xs text-green-400">확인 완료된 아이디입니다.</p>
+              )}
+            </div>
+
             <TextInput
               label="비밀번호"
               type="password"
@@ -205,6 +262,8 @@ const SignupPage = ({ onNavigateToLogin }) => {
               autoComplete="new-password"
               error={errors.password}
             />
+
+            {/* 비밀번호 확인 필드 (기존 스타일 유지) */}
             <TextInput
               label="비밀번호 확인"
               type="password"
@@ -222,6 +281,7 @@ const SignupPage = ({ onNavigateToLogin }) => {
                   : 'border-red-400/70 focus:border-red-300/70 focus:ring-red-300/20'
               }`}
             />
+
             <TextInput
               label="이메일"
               type="email"
@@ -232,6 +292,7 @@ const SignupPage = ({ onNavigateToLogin }) => {
               autoComplete="email"
               error={errors.email}
             />
+
             <TextInput
               label="닉네임"
               placeholder="표시될 별명을 입력하세요"
@@ -241,7 +302,10 @@ const SignupPage = ({ onNavigateToLogin }) => {
               error={errors.nickname}
             />
 
-            <PrimaryButton type="submit" disabled={loading}>
+            <PrimaryButton 
+              type="submit" 
+              disabled={loading || !isIdChecked} // 중복 확인 전에는 버튼 비활성화 권장
+            >
               {loading ? '가입 중...' : '회원가입'}
             </PrimaryButton>
           </form>

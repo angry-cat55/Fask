@@ -32,3 +32,33 @@ exports.signup = (req, res) => {
         },
     });
 };
+
+exports.checkUsername = (req, res) => {
+    // 클라이언트로부터 전달받은 로그인 아이디 추출
+    const { username } = req.query;
+    const loginId = username; // 클라이언트에서 전달된 username을 loginId로 사용
+    
+    // 로그인 아이디가 전달되었는지 확인
+    if (!loginId) {
+        // 로그인 아이디가 없는 경우 400 Bad Request 응답 반환
+        return res.status(400).json({
+            success: false,
+            message: '아이디 필드가 누락되었습니다.',
+        });
+    }
+
+    // 전달받은 로그인 아이디 로그로 출력
+    console.log('중복 확인할 로그인 아이디:', loginId);
+
+    /*
+     * TODO: 실제 로그인 아이디 중복 확인 로직 구현 (데이터베이스에서 해당 로그인 아이디를 가진 사용자가 있는지 확인)
+     */
+
+    // 로그인 아이디 중복 확인 성공 시 200 OK 응답과 함께 결과 반환
+    return res.status(200).json({
+        success: true,
+        data: {
+            isAvailable: true, // true: 사용 가능한 아이디일 때, false: 이미 존재하는 아이디일 때
+        },
+    });
+};
