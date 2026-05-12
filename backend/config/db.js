@@ -25,7 +25,11 @@ const pool = mysql.createPool({
   keepAliveInitialDelayMs: 0,
   // SSL 사용 여부 (Aiven은 보안을 위해 SSL 필수)
   // DB_SSL이 'true'이면 Amazon SSL 프로토콜 사용
-  ssl: process.env.DB_SSL === 'true' ? 'Amazon' : false,
+  ssl: process.env.DB_SSL === 'true'
+  ? {
+      rejectUnauthorized: false
+    }
+  : false,
 });
 
 // 다른 파일에서 pool을 import해서 사용할 수 있도록 export
