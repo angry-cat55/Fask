@@ -64,8 +64,8 @@ exports.checkUsername = (req, res) => {
 };
 
 exports.findId = (req, res) => {
-    //클라이언트로부터 전달받은 이메일 추출
-    const { email } = req.query;
+    // 클라이언트로부터 전달받은 이메일 추출
+    const { email } = req.body;
     
     // 이메일이 전달되었는지 확인
     if (!email) {
