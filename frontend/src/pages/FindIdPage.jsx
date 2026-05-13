@@ -2,12 +2,6 @@ import React, { useState } from 'react';
 import TextInput from '../components/ui/TextInput.jsx';
 import PrimaryButton from '../components/ui/PrimaryButton.jsx';
 
-const mockUsersByEmail = {
-  'test@gmail.com': 'test123',
-  'kim@test.com': 'kim_fask',
-  'lee@test.com': 'lee2026',
-};
-
 const FindIdPage = ({ onNavigateToLogin }) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -51,16 +45,20 @@ const FindIdPage = ({ onNavigateToLogin }) => {
     setLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const response = await fetch('/api/users/find-id', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
 
-      const foundLoginId = mockUsersByEmail[email.trim().toLowerCase()];
+      const result = await response.json();
 
-      if (!foundLoginId) {
-        setError('등록된 이메일이 아닙니다.');
+      if (!response.ok || !result.success) {
+        setError(result.message || '등록된 이메일이 아닙니다.');
         return;
       }
 
-      setResult(foundLoginId);
+      setResult(result.data.loginId);
     } catch (requestError) {
       console.error('아이디 찾기 중 오류 발생:', requestError);
       setError('아이디 찾기 중 오류가 발생했습니다.');
