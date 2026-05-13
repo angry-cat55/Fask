@@ -1,7 +1,7 @@
 const pool = require('../config/db');
 
 exports.findByLoginId = async (loginId) => {
-    const [rows] = await db.query(
+    const [rows] = await pool.query(
         'SELECT * FROM users WHERE login_id = ?',
         [loginId]
     );
@@ -10,7 +10,7 @@ exports.findByLoginId = async (loginId) => {
 };
 
 exports.createUser = async ({ loginId, password, email, nickname }) => {
-    const [result] = await db.query(
+    const [result] = await pool.query(
         `INSERT INTO users 
         (login_id, password, email, nickname) 
         VALUES (?, ?, ?, ?)`,
