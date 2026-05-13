@@ -42,11 +42,10 @@ exports.login = (req, res) => {
                 createdAt: userInfo.createdAt,
             },
         });
-    } catch (error) { // 로그인 처리 중 예외가 발생한 경우, 500 Internal Server Error 반환
-        console.error('로그인 중 오류 발생:', error);
-        return res.status(500).json({
+    } catch (error) { // 로그인 과정에서 발생한 에러 처리
+        return res.status(error.statusCode || 500).json({
             success: false,
-            message: '서버 내부 오류가 발생하였습니다.',
+            message: error.message || '서버 내부 오류가 발생하였습니다.',
         });
     }
 };
