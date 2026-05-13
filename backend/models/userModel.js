@@ -1,6 +1,6 @@
 const pool = require('../config/db');
 
-exports.findByLoginId = async (loginId) => {
+exports.findUserByLoginId = async (loginId) => {
     const [rows] = await pool.query(
         'SELECT * FROM users WHERE login_id = ?',
         [loginId]

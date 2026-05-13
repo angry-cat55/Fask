@@ -4,7 +4,7 @@ const userModel = require('../models/userModel');
 //회원가입 비즈니스 로직
 exports.signupUser = async ({ loginId, password, email, nickname }) => {
     //아이디 중복 확인
-    const existingUser = await userModel.findByLoginId(loginId);
+    const existingUser = await userModel.findUserByLoginId(loginId);
 
     if (existingUser) {
         throw new Error('이미 사용 중인 아이디입니다.');
@@ -40,4 +40,22 @@ exports.findIdByEmail = async (email) => {
     }
 
     return loginId.loginId;
+};
+
+// 비밀번호 재설정 가능 여부 확인 비즈니스 로직
+exports.checkPassword = async ({ loginId, email }) => {
+    // 로그인 아이디로 사용자 조회
+    const user = await userModel.findUserByLoginId(loginId);
+
+    // 사용자가 존재하지 않으면 false 반환
+    if (!user) {
+        return false;
+    }
+
+    // 이메일이 일치하는지 확인
+    if (user.email !== email) {
+        return false;
+    }
+
+    return true; // 로그인 아이디와 이메일이 유저 정보와 일치하면 true, 그렇지 않으면 false 반환
 };
