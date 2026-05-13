@@ -1,5 +1,7 @@
+const authService = require('../services/authService');
+
 // 클라이언트로부터 전달받은 로그인 정보 추출
-exports.login = (req, res) => {
+exports.login = async (req, res) => {
     const { loginId, password } = req.body;
 
     // 필수 필드가 모두 채워졌는지 확인
@@ -17,22 +19,25 @@ exports.login = (req, res) => {
         password: password ? '[숨김]' : '',
     });
 
-    /*
-     * TODO: 실제 인증 로직 구현
-     *  - 데이터베이스에서 사용자 조회
-     *  - 해싱된 비밀번호 비교
-     */
+    try {
+        // 로그인 비즈니스 로직을 수행하여 사용자 정보 조회
+        const userInfo = await authService.login(loginId, password);
 
-    // 로그인 성공 시 200 OK 응답과 함께 사용자 정보 전달 (현재는 하드코딩된 테스트 닉네임 데이터 반환)
-    return res.status(200).json({
-        success: true,
-        data: {
-            // 실제로는 데이터베이스에서 조회한 사용자 정보들을 반환해야 합니다.
-            userId: 1,
-            nickname: '테스트 유저',
-            loginId: loginId,
-            email: 'abc@test.com',
-            createdAt: '2024-06-01T12:00:00Z',
-        },
-    });
+        // 사용자 정보를 조회한 성공한 경우, 200 OK 응답과 함께 사용자 정보 반환
+        return res.status(200).json({
+            success: true,
+            data: {
+                userId: userInfo.userId,
+                nickname: userInfo.nickname,
+                loginId: userInfo.loginId,
+                email: userInfo.email,
+                createdAt: userInfo.createdAt,
+            },
+        });
+    } catch (error) { // 로그인 과정에서 발생한 에러 처리
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || '서버 내부 오류가 발생하였습니다.',
+        });
+    }
 };
