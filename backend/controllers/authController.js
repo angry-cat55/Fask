@@ -23,14 +23,6 @@ exports.login = async (req, res) => {
         // 로그인 비즈니스 로직을 수행하여 사용자 정보 조회
         const userInfo = await authService.login(loginId, password);
 
-        // 사용자 정보가 없는 경우, 401 Unauthorized 반환
-        if (!userInfo) {
-            return res.status(401).json({
-                success: false,
-                message: '로그인에 실패하였습니다. 아이디 또는 비밀번호를 확인해주세요.',
-            });
-        }
-
         // 사용자 정보를 조회한 성공한 경우, 200 OK 응답과 함께 사용자 정보 반환
         return res.status(200).json({
             success: true,
