@@ -129,4 +129,41 @@ exports.checkPassword = (req, res) => {
         success: true,
         message: '본인 확인이 완료되었습니다.',
     });
+
+};4
+
+exports.resetPassword = (req, res) => {
+    // 클라이언트로부터 전달받은 로그인 아이디와 새 비밀번호 추출
+    const { loginId, newPassword } = req.body;
+    // 로그인 아이디가 전달되었는지 확인
+    if (!loginId) {
+        return res.status(400).json({
+            success: false,
+            message: '아이디 필드가 누락되었습니다.',
+        });
+    }
+    // 새 비밀번호가 전달되었는지 확인
+    if (!newPassword) {
+        return res.status(400).json({
+            success: false,
+            message: '새 비밀번호 필드가 누락되었습니다.',
+        });
+    }
+    // 전달받은 값 로그로 출력 (새 비밀번호는 숨김 처리)
+    console.log('비밀번호 재설정 요청 로그인 아이디:', loginId);
+    console.log('비밀번호 재설정 요청 새 비밀번호:', '[숨김]');
+    /*
+     * TODO: 실제 비밀번호 변경 로직 구현
+     * 1. 데이터베이스에서 loginId를 가진 사용자가 있는지 확인
+     * 2. 사용자가 존재하지 않으면 실패 응답 반환
+     * 3. newPassword를 암호화
+     * 4. 암호화된 비밀번호를 DB에 저장
+     * 5. 성공 응답 반환
+     */
+    // 임시 응답: DB 연결 전이므로 항상 성공 처리
+    return res.status(200).json({
+        success: true,
+        message: '비밀번호가 성공적으로 재설정되었습니다.',
+    });
 };
+    
