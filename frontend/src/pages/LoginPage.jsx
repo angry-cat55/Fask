@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 
-const LoginPage = ({ onNavigateToSignup, onNavigateToFindId, onLoginSuccess }) => {
+const LoginPage = ({
+  onNavigateToSignup,
+  onNavigateToFindId,
+  onNavigateToResetPassword,
+  onLoginSuccess,
+}) => {
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
 
@@ -73,13 +78,21 @@ const LoginPage = ({ onNavigateToSignup, onNavigateToFindId, onLoginSuccess }) =
             </button>
           </form>
 
-          <div className="mt-8 flex items-center justify-center gap-4 text-sm text-slate-400">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm text-slate-400">
             <button
               type="button"
               className="cursor-pointer transition hover:text-white"
               onClick={onNavigateToFindId}
             >
               아이디 찾기
+            </button>
+            <span className="cursor-default text-slate-600">|</span>
+            <button
+              type="button"
+              className="cursor-pointer transition hover:text-white"
+              onClick={onNavigateToResetPassword}
+            >
+              비밀번호 변경
             </button>
             <span className="cursor-default text-slate-600">|</span>
             <button
