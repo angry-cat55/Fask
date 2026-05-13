@@ -1,7 +1,7 @@
 const authService = require('../services/authService');
 
 // 클라이언트로부터 전달받은 로그인 정보 추출
-exports.login = (req, res) => {
+exports.login = async (req, res) => {
     const { loginId, password } = req.body;
 
     // 필수 필드가 모두 채워졌는지 확인
@@ -35,7 +35,7 @@ exports.login = (req, res) => {
         return res.status(200).json({
             success: true,
             data: {
-                userId: userInfo.id,
+                userId: userInfo.userId,
                 nickname: userInfo.nickname,
                 loginId: userInfo.loginId,
                 email: userInfo.email,

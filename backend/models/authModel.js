@@ -5,14 +5,14 @@ exports.findUserByLoginId = async (loginId) => {
     // SQL 쿼리: users 테이블에서 loginId에 해당하는 사용자 정보 조회
     const sql = `
         SELECT
-            id,
-            loginId,
+            user_id AS userId,
+            login_id AS loginId,
             password,
             email,
             nickname,
-            createdAt
+            created_at AS createdAt
         FROM users
-        WHERE loginId = ?
+        WHERE login_id = ?
         LIMIT 1
     `;
 
