@@ -2,6 +2,7 @@ import { useState } from 'react';
 import LoginPage from './pages/LoginPage.jsx';
 import SignupPage from './pages/SignupPage.jsx';
 import FindIdPage from './pages/FindIdPage.jsx';
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 import WorkspacePage from './pages/WorkspacePage.jsx';
 
 function App() {
@@ -29,10 +30,13 @@ function App() {
         <SignupPage onNavigateToLogin={() => setCurrentPage('login')} />
       ) : currentPage === 'find-id' ? (
         <FindIdPage onNavigateToLogin={() => setCurrentPage('login')} />
+      ) : currentPage === 'reset-password' ? (
+        <ResetPasswordPage onNavigateToLogin={() => setCurrentPage('login')} />
       ) : (
         <LoginPage
           onNavigateToSignup={() => setCurrentPage('signup')}
           onNavigateToFindId={() => setCurrentPage('find-id')}
+          onNavigateToResetPassword={() => setCurrentPage('reset-password')}
           onLoginSuccess={handleLoginSuccess}
         />
       )}
