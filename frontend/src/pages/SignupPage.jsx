@@ -182,12 +182,11 @@ const SignupPage = ({ onNavigateToLogin }) => {
       const result = await response.json();
 
       if (result.success) {
-        alert(`${result.data.nickname || loginId}님, 회원가입이 완료되었습니다!`);
-        // 필드 초기화
+        alert(`${nickname}님, 회원가입이 완료되었습니다!`);        
         setLoginId('');
         setIsIdChecked(false);
         setPassword('');
-        setConfirmPassword('');
+        setConfirmPassword(''); 
         setEmail('');
         setNickname('');
         setErrors({});
