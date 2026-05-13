@@ -1,13 +1,21 @@
 const pool = require('../config/db');
 
-exports.createUser = async (userData) => {
-    // TODO: 회원 정보 저장 SQL 작성
-    return null;
+exports.findByLoginId = async (loginId) => {
+    const [rows] = await db.query(
+        'SELECT * FROM users WHERE login_id = ?',
+        [loginId]
+    );
+
+    return rows[0];
 };
 
-exports.findUserByLoginId = async (loginId) => {
-    // TODO: loginId 중복 확인용 조회 SQL 작성
-    return null;
+exports.createUser = async ({ loginId, password, email, nickname }) => {
+    const [result] = await db.query(
+        `INSERT INTO users 
+        (login_id, password, email, nickname) 
+        VALUES (?, ?, ?, ?)`,
+        [loginId, password, email, nickname]//암호화 할꺼면 password 대신 hashedPassword
+    );
 };
 
 // 이메일로 로그인 아이디 조회
