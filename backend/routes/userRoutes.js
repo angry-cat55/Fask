@@ -18,4 +18,8 @@ router.post('/find-id', userController.findId);
 // /api/users/check-password 요청을 userController의 checkPassword 컨트롤러로 전달
 router.post('/check-password', userController.checkPassword);
 
+// 비밀번호 재설정 요청 API
+// /api/users/reset-password 요청을 userController의 resetPassword 컨트롤러로 전달
+router.patch('/reset-password', userController.resetPassword);
+
 module.exports = router;
