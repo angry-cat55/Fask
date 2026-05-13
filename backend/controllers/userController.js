@@ -1,3 +1,5 @@
+const userService = require('../services/userService');
+
 exports.signup = (req, res) => {
     // 클라이언트로부터 전달받은 회원가입 정보 추출
     const { loginId, password, email, nickname } = req.body;
@@ -37,7 +39,7 @@ exports.checkUsername = (req, res) => {
     // 클라이언트로부터 전달받은 로그인 아이디 추출
     const { username } = req.query;
     const loginId = username; // 클라이언트에서 전달된 username을 loginId로 사용
-    
+
     // 로그인 아이디가 전달되었는지 확인
     if (!loginId) {
         // 로그인 아이디가 없는 경우 400 Bad Request 응답 반환
@@ -63,10 +65,10 @@ exports.checkUsername = (req, res) => {
     });
 };
 
-exports.findId = (req, res) => {
+exports.findId = async (req, res) => {
     // 클라이언트로부터 전달받은 이메일 추출
     const { email } = req.body;
-    
+
     // 이메일이 전달되었는지 확인
     if (!email) {
         // 이메일이 없는 경우 400 Bad Request 응답 반환
@@ -79,17 +81,23 @@ exports.findId = (req, res) => {
     // 전달받은 이메일 로그로 출력
     console.log('아이디 찾기용 이메일:', email);
 
-    /*
-     * TODO: 실제 이메일을 사용하여 로그인 아이디를 찾는 로직 구현 (데이터베이스에서 해당 이메일을 가진 사용자의 loginId를 조회)
-     */
+    try {
+        // 아이디 찾기 비즈니스 로직을 수행하여 로그인 아이디 조회
+        const loginId = await userService.findIdByEmail(email);
 
-    // 아이디 찾기 성공 시 200 OK 응답과 함께 결과 반환
-    return res.status(200).json({
-        success: true,
-        data: {
-            loginId: 'exampleUser', // 실제로는 데이터베이스에서 조회한 로그인 아이디를 반환해야 합니다.
-        },
-    });
+        // 아이디 찾기 성공 시 200 OK 응답과 함께 결과 반환
+        return res.status(200).json({
+            success: true,
+            data: {
+                loginId: loginId,
+            },
+        });
+    } catch (error) { // 아이디 찾기 과정에서 발생한 에러 처리
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || '서버 내부 오류가 발생하였습니다.',
+        });
+    }
 };
 
 exports.checkPassword = (req, res) => {
@@ -130,7 +138,7 @@ exports.checkPassword = (req, res) => {
         message: '본인 확인이 완료되었습니다.',
     });
 
-};4
+}; 4
 
 exports.resetPassword = (req, res) => {
     // 클라이언트로부터 전달받은 로그인 아이디와 새 비밀번호 추출
@@ -166,4 +174,3 @@ exports.resetPassword = (req, res) => {
         message: '비밀번호가 성공적으로 재설정되었습니다.',
     });
 };
-    
