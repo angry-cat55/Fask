@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const LoginPage = ({ onNavigateToSignup, onNavigateToFindId }) => {
+const LoginPage = ({ onNavigateToSignup, onNavigateToFindId, onLoginSuccess }) => {
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
 
@@ -17,8 +17,7 @@ const LoginPage = ({ onNavigateToSignup, onNavigateToFindId }) => {
       const result = await response.json();
 
       if (result.success) {
-        // 응답 데이터에서 nickname 추출
-        alert(`${result.data.nickname}님 환영합니다!`);
+        onLoginSuccess(result.data);
       } else {
         alert(result.message || '로그인 실패');
       }
