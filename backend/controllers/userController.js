@@ -3,7 +3,9 @@ const userService = require('../services/userService');
 // 회원가입 컨트롤러
 exports.signup = async (req, res) => {
     try {
+        // 클라이언트로부터 전달받은 회원가입 정보 추출
         const { loginId, password, email, nickname } = req.body;
+
         // 필수 필드가 모두 전달되었는지 확인
         if (!loginId || !password || !email || !nickname) {
             return res.status(400).json({
@@ -11,6 +13,7 @@ exports.signup = async (req, res) => {
                 message: '필드 중에 공백이 있는 경우가 있습니다.',
             });
         }
+
         // 전달받은 회원가입 정보 로그로 출력 (비밀번호는 숨김 처리)
         console.log('전달받은 회원가입 정보:', {
             loginId,
@@ -18,6 +21,7 @@ exports.signup = async (req, res) => {
             email,
             nickname,
         });
+
         // 회원가입 userService로 받은 정보를 전달
         await userService.signupUser({
             loginId,
@@ -25,13 +29,14 @@ exports.signup = async (req, res) => {
             email,
             nickname,
         });
+
         // 회원가입 성공 응답 반환
         return res.status(201).json({
             success: true,
             message: '회원가입 성공',
         });
 
-    } catch (error) {
+    } catch (error) { // 회원가입 과정에서 발생한 에러 처리
         console.error('회원가입 오류:', error);
 
         return res.status(500).json({
@@ -41,6 +46,7 @@ exports.signup = async (req, res) => {
     }
 };
 
+// 아이디 중복 확인 컨트롤러
 exports.checkUsername = (req, res) => {
     // 클라이언트로부터 전달받은 로그인 아이디 추출
     const { username } = req.query;
@@ -48,6 +54,8 @@ exports.checkUsername = (req, res) => {
 
     // 로그인 아이디가 전달되었는지 확인
     if (!loginId) {
+        console.error('로그인 아이디 중복 확인 오류:', error);
+
         // 로그인 아이디가 없는 경우 400 Bad Request 응답 반환
         return res.status(400).json({
             success: false,
@@ -71,6 +79,7 @@ exports.checkUsername = (req, res) => {
     });
 };
 
+// 아이디 찾기 컨트롤러
 exports.findId = async (req, res) => {
     // 클라이언트로부터 전달받은 이메일 추출
     const { email } = req.body;
@@ -99,6 +108,8 @@ exports.findId = async (req, res) => {
             },
         });
     } catch (error) { // 아이디 찾기 과정에서 발생한 에러 처리
+        console.error('아이디 찾기 오류:', error);
+
         return res.status(error.statusCode || 500).json({
             success: false,
             message: error.message || '서버 내부 오류가 발생하였습니다.',
@@ -143,6 +154,8 @@ exports.checkPassword = async (req, res) => {
             },
         });
     } catch (error) { // 비밀번호 확인 과정에서 발생한 에러 처리
+        console.error('비밀번호 재설정 가능 여부 확인 오류:', error);
+
         return res.status(error.statusCode || 500).json({
             success: false,
             message: error.message || '서버 내부 오류가 발생하였습니다.',
@@ -150,6 +163,7 @@ exports.checkPassword = async (req, res) => {
     }
 };
 
+// 비밀번호 재설정 컨트롤러
 exports.resetPassword = (req, res) => {
     // 클라이언트로부터 전달받은 로그인 아이디와 새 비밀번호 추출
     const { loginId, newPassword } = req.body;
