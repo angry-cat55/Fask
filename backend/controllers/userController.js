@@ -22,7 +22,7 @@ exports.signup = async (req, res) => {
             nickname,
         });
 
-        // 회원가입 userService로 받은 정보를 전달
+        // 회원가입 비즈니스 로직을 수행
         await userService.signupUser({
             loginId,
             password,
@@ -33,13 +33,15 @@ exports.signup = async (req, res) => {
         // 회원가입 성공 응답 반환
         return res.status(201).json({
             success: true,
-            message: '회원가입 성공',
+            data: {
+                nickname: nickname,
+            }
         });
 
     } catch (error) { // 회원가입 과정에서 발생한 에러 처리
-        console.error('회원가입 오류:', error);
+        console.error('회원가입 오류: ', error);
 
-        return res.status(500).json({
+        return res.status(error.statusCode || 500).json({
             success: false,
             message: error.message || '서버 오류가 발생했습니다.',
         });
@@ -52,6 +54,7 @@ exports.checkUsername = async (req, res) => {
         // 클라이언트에서 ?username=test123 으로 보낸 값
         const { username } = req.query;
         const loginId = username;
+
         // 로그인 아이디가 전달되었는지 확인
         if (!loginId || loginId.trim() === '') {
             return res.status(400).json({
@@ -64,16 +67,17 @@ exports.checkUsername = async (req, res) => {
 
         // service로 중복 확인 요청
         const isDuplicated = await userService.checkUsername(loginId);
+
         // 중복 확인 결과에 따라 응답 반환
         return res.status(200).json({
             success: true,
             data: {
-                isDuplicated,
+                isDuplicated, // true: 아이디가 이미 존재하여 중복, false: 아이디가 존재하지 않아 사용 가능
             },
         });
-
-    } catch (error) {
+    } catch (error) { // 아이디 중복 확인 과정에서 발생한 에러 처리
         console.error('로그인 아이디 중복 확인 오류:', error);
+
         // 서버 오류 응답 반환
         return res.status(500).json({
             success: false,
@@ -101,21 +105,22 @@ exports.findId = async (req, res) => {
 
     try {
         // 아이디 찾기 비즈니스 로직을 수행하여 로그인 아이디 조회
-        const loginId = await userService.findIdByEmail(email);
+        const result = await userService.findIdByEmail(email);
 
-        // 아이디 찾기 성공 시 200 OK 응답과 함께 결과 반환
-        return res.status(200).json({
-            success: true,
+        // 아이디 찾기 로직에 따른 응답과 함께 결과 반환
+        return res.status(result.statusCode).json({
+            success: result.isSuccess,
             data: {
-                loginId: loginId,
+                loginId: result.data.loginId,
             },
+            message: result.message,
         });
     } catch (error) { // 아이디 찾기 과정에서 발생한 에러 처리
         console.error('아이디 찾기 오류:', error);
 
-        return res.status(error.statusCode || 500).json({
+        return res.status(500).json({
             success: false,
-            message: error.message || '서버 내부 오류가 발생하였습니다.',
+            message: '서버 내부 오류가 발생하였습니다.',
         });
     }
 };
@@ -159,9 +164,9 @@ exports.checkPassword = async (req, res) => {
     } catch (error) { // 비밀번호 확인 과정에서 발생한 에러 처리
         console.error('비밀번호 재설정 가능 여부 확인 오류:', error);
 
-        return res.status(error.statusCode || 500).json({
+        return res.status(500).json({
             success: false,
-            message: error.message || '서버 내부 오류가 발생하였습니다.',
+            message: '서버 내부 오류가 발생하였습니다.',
         });
     }
 };
@@ -203,9 +208,9 @@ exports.resetPassword = async (req, res) => {
     } catch (error) { // 비밀번호 재설정 과정에서 발생한 에러 처리
         console.error('비밀번호 재설정 오류:', error);
 
-        return res.status(error.statusCode || 500).json({
+        return res.status(500).json({
             success: false,
-            message: error.message || '서버 내부 오류가 발생하였습니다.',
+            message: '서버 내부 오류가 발생하였습니다.',
         });
     }
 };

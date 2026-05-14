@@ -22,23 +22,20 @@ exports.login = async (req, res) => {
 
     try {
         // 로그인 비즈니스 로직을 수행하여 사용자 정보 조회
-        const userInfo = await authService.login(loginId, password);
+        const result = await authService.login(loginId, password);
 
-        // 사용자 정보를 조회한 성공한 경우, 200 OK 응답과 함께 사용자 정보 반환
-        return res.status(200).json({
-            success: true,
-            data: {
-                userId: userInfo.userId,
-                nickname: userInfo.nickname,
-                loginId: userInfo.loginId,
-                email: userInfo.email,
-                createdAt: userInfo.createdAt,
-            },
+        // 사용자 정보를 조회 로직에 따른 응답과 함께 결과 반환
+        return res.status(result.statusCode).json({
+            success: result.isSuccess,
+            data: result.data,
+            message: result.message,
         });
     } catch (error) { // 로그인 과정에서 발생한 에러 처리
-        return res.status(error.statusCode || 500).json({
+        console.error('로그인 오류:', error);
+
+        return res.status(500).json({
             success: false,
-            message: error.message || '서버 내부 오류가 발생하였습니다.',
+            message: '서버 내부 오류가 발생하였습니다.',
         });
     }
 };
