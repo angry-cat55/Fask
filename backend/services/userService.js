@@ -24,8 +24,11 @@ exports.signupUser = async ({ loginId, password, email, nickname }) => {
 
 // 아이디 중복 확인 비즈니스 로직
 exports.checkUsername = async (loginId) => {
-    // TODO: 아이디 중복 확인 비즈니스 로직 구현
-    return userModel.findUserByLoginId(loginId);
+    const trimmedLoginId = loginId.trim();
+
+    const existingUser = await userModel.findUserByLoginId(trimmedLoginId);
+
+    return !!existingUser;
 };
 
 // 아이디 찾기 비즈니스 로직
