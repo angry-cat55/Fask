@@ -1,6 +1,38 @@
 import React, { useState, useRef, useEffect } from 'react';
 import TextInput from '../components/ui/TextInput';
 
+// Mock API를 별도 파일로 두지 않고 여기서 하드코딩.
+// 명세: POST /api/workspaces/:workspaceId/invitations
+// body: { userId?: number, invitedLoginId: string }
+// response: { success: boolean, message: string }
+const mockInviteMember = async ({ userId = 1, invitedLoginId }) => {
+  return new Promise((resolve, reject) => {
+    const delay = 700 + Math.floor(Math.random() * 500);
+    setTimeout(() => {
+      const networkFail = Math.random() < 0.05;
+      const appFail = Math.random() < 0.15;
+
+      if (networkFail) {
+        reject(new Error('네트워크 오류가 발생했습니다.'));
+        return;
+      }
+
+      if (appFail) {
+        resolve({
+          success: false,
+          message: '이미 초대되었거나 존재하지 않는 사용자입니다.',
+        });
+        return;
+      }
+
+      resolve({
+        success: true,
+        message: `${invitedLoginId}님에게 초대가 전송되었습니다.(요청자: ${userId})`,
+      });
+    }, delay);
+  });
+};
+
 // ── SVG Icons ──────────────────────────────────────────────────────────────
 const Ico = ({ children, size = 16 }) => (
   <svg
@@ -141,6 +173,7 @@ const Sidebar = ({ active, onSelect, nickname, onLogout }) => {
   const membersPanelRef = useRef(null);
   const [inviteUserId, setInviteUserId] = useState('');
   const [inviteTouched, setInviteTouched] = useState(false);
+  const [inviteLoading, setInviteLoading] = useState(false);
   const validateInviteId = (value) => {
     const regex = /^[a-zA-Z0-9_-]{4,20}$/;
     return regex.test(value);
@@ -255,10 +288,14 @@ const Sidebar = ({ active, onSelect, nickname, onLogout }) => {
                               onChange={(event) => {
                                 const v = event.target.value;
                                 setInviteUserId(v);
-                                if (v.trim().length > 0) setInviteTouched(false);
+                                if (v.trim().length > 0)
+                                  setInviteTouched(false);
                               }}
                               onBlur={(e) => {
-                                if (!e.target.value || e.target.value.trim().length === 0) {
+                                if (
+                                  !e.target.value ||
+                                  e.target.value.trim().length === 0
+                                ) {
                                   setInviteTouched(true);
                                 }
                               }}
@@ -277,18 +314,48 @@ const Sidebar = ({ active, onSelect, nickname, onLogout }) => {
                         <div className="flex items-center justify-center gap-2 pt-1">
                           <button
                             type="button"
+                            onClick={async () => {
+                              if (inviteLoading) return;
+                              const userId = inviteUserId.trim();
+                              if (!userId || !validateInviteId(userId)) return;
+                              try {
+                                setInviteLoading(true);
+                                const res = await mockInviteMember({
+                                  invitedLoginId: userId,
+                                });
+                                if (res.success) {
+                                  alert(
+                                    res.message || '초대가 발송되었습니다.',
+                                  );
+                                  setInviteUserId('');
+                                  setIsMembersOpen(false);
+                                  onSelect('inbox');
+                                } else {
+                                  alert(res.message || '초대에 실패했습니다.');
+                                }
+                              } catch (err) {
+                                console.error(err);
+                                alert(
+                                  err.message || '초대 중 오류가 발생했습니다.',
+                                );
+                              } finally {
+                                setInviteLoading(false);
+                              }
+                            }}
                             disabled={
+                              inviteLoading ||
                               inviteUserId.trim().length === 0 ||
                               !validateInviteId(inviteUserId)
                             }
                             className={`rounded-md px-3 py-1.5 text-xs font-medium text-white transition ${
+                              inviteLoading ||
                               inviteUserId.trim().length === 0 ||
                               !validateInviteId(inviteUserId)
                                 ? 'bg-cyan-500/40 cursor-not-allowed'
                                 : 'bg-cyan-500 hover:bg-cyan-600'
                             }`}
                           >
-                            초대
+                            {inviteLoading ? '전송중...' : '초대'}
                           </button>
                           <button
                             type="button"
