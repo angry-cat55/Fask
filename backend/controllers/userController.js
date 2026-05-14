@@ -209,3 +209,35 @@ exports.resetPassword = async (req, res) => {
         });
     }
 };
+
+// 유저의 참가한 워크스페이스 목록 조회 컨트롤러
+exports.getWorkspaces = async (req, res) => {
+    // 클라이언트로부터 전달받은 userId 추출
+    const { userId } = req.params;
+
+    // userId가 전달되었는지 확인
+    if (!userId) {
+        return res.status(400).json({
+            success: false,
+            message: '경로 파라미터에 userId가 누락되었습니다.',
+        });
+    }
+
+    try {
+        // 유저의 참가한 워크스페이스 목록 조회 비즈니스 로직을 수행
+        const result = await userService.getWorkspaces(userId);
+
+        // 워크스페이스 목록 조회 로직에 따른 응답과 함께 결과 반환
+        return res.status(result.statusCode).json({
+            success: result.isSuccess,
+            data: result.data,
+        });
+    } catch (error) { // 워크스페이스 목록 조회 과정에서 발생한 에러 처리
+        console.error('워크스페이스 목록 조회 오류:', error);
+
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || '서버 내부 오류가 발생하였습니다.',
+        });
+    }
+};
