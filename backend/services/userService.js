@@ -1,22 +1,21 @@
 const userModel = require('../models/userModel');
 
-// const bcrypt = require('bcrypt');
 // 회원가입 비즈니스 로직
 exports.signupUser = async ({ loginId, password, email, nickname }) => {
     // 아이디 중복 확인
     const existingUser = await userModel.findUserByLoginId(loginId);
 
+    // 로그인 아이디가 이미 존재하면, 409 Conflict 에러 발생
     if (existingUser) {
-        throw new Error('이미 사용 중인 아이디입니다.');
+        const error = new Error('이미 사용 중인 아이디입니다.');
+        error.statusCode = 409;
+        throw error;
     }
 
-    // 비밀번호 암호화 할꺼면 해도됨
-    // const hashedPassword = await bcrypt.hash(password, 10);
-
-    //DB에 저장
+    // 회원가입 처리
     await userModel.createUser({
         loginId,
-        password, // : hashedPassword, // 암호화 할꺼면 이것도 바꿔야됨
+        password,
         email,
         nickname,
     });
@@ -39,12 +38,21 @@ exports.findIdByEmail = async (email) => {
 
     // 조회된 로그인 아이디가 없으면, 404 Not Found 에러 발생
     if (!loginId) {
-        const error = new Error('해당 이메일로 등록된 아이디를 찾을 수 없습니다.');
-        error.statusCode = 404;
-        throw error;
+        return {
+            isSuccess: false,
+            message: '해당 이메일로 등록된 아이디를 찾을 수 없습니다.',
+            statusCode: 404,
+        }
     }
 
-    return loginId.loginId;
+    // 조회된 로그인 아이디가 있으면, 200 OK 응답과 함께 결과 반환
+    return {
+        isSuccess: true,
+        statusCode: 200,
+        data: {
+            loginId: loginId.loginId
+        }
+    };
 };
 
 // 비밀번호 재설정 가능 여부 확인 비즈니스 로직
@@ -96,4 +104,41 @@ exports.resetPassword = async ({ loginId, newPassword }) => {
         message: '비밀번호가 성공적으로 재설정되었습니다.',
         statusCode: 200,
     }
+}
+
+// 유저가 참가한 워크스페이스 목록 조회 비즈니스 로직
+exports.getWorkspaces = async (userId) => {
+    // userId가 존재하는지 확인
+    const user = await userModel.findUserById(userId);
+
+    // 사용자가 존재하지 않으면 404 Not Found 에러 발생
+    if (!user) {
+        const error = new Error('해당 사용자를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 유저가 참가한 워크스페이스 목록 조회
+    const workspaces = await userModel.findWorkspacesByUserId(userId);
+
+    // workspaces가 null/undefined일 수 있으므로 안전하게 처리
+    if (!workspaces || workspaces.length === 0) {
+        return {
+            isSuccess: true,
+            statusCode: 200,
+            data: {
+                workspaces: [],
+                count: 0,
+            },
+        };
+    }
+
+    return {
+        isSuccess: true,
+        statusCode: 200,
+        data: {
+            workspaces: workspaces,
+            count: workspaces.length,
+        },
+    };
 }

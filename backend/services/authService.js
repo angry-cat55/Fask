@@ -7,10 +7,23 @@ exports.login = async (loginId, password) => {
 
     // 유저 정보가 없거나 비밀번호가 일치하지 않으면, 401 Unauthorized 에러 발생
     if (!userInfo || userInfo.password !== password) {
-        const error = new Error('아이디 또는 비밀번호를 확인해주세요.');
-        error.statusCode = 401;
-        throw error;
+        return {
+            isSuccess: false,
+            message: '아이디 혹은 비밀번호를 확인해주세요.',
+            statusCode: 401,
+        }
     }
 
-    return userInfo; // 로그인 성공 시 유저 정보 반환
+    // 로그인 성공 시 유저 정보 반환
+    return {
+        isSuccess: true,
+        data: {
+            userId: userInfo.userId,
+            nickname: userInfo.nickname,
+            loginId: userInfo.loginId,
+            email: userInfo.email,
+            createdAt: userInfo.createdAt,
+        },
+        statusCode: 200,
+    };
 };
