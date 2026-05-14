@@ -37,3 +37,16 @@ exports.findLoginIdByEmail = async (email) => {
     // 조회된 로그인 아이디가 있으면 첫 번째 행을 반환하고, 없으면 null 반환
     return rows[0] || null;
 };
+
+// 비밀번호 재설정
+exports.updatePasswordByLoginId = async ({ loginId, newPassword }) => {
+    // SQL 쿼리: users 테이블에서 loginId에 해당하는 사용자의 비밀번호 업데이트
+    const sql = `
+        UPDATE users
+        SET password = ?
+        WHERE login_id = ?
+    `;
+
+    // SQL 쿼리를 실행하여 로그인 아이디에 해당하는 사용자의 비밀번호를 업데이트
+    await pool.execute(sql, [newPassword, loginId]);
+}
