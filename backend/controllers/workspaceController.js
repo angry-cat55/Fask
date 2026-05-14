@@ -6,6 +6,9 @@ exports.deleteWorkspace = async (req, res) => {
         // URL 경로에서 workspaceId 추출
         const { workspaceId } = req.params;
 
+        // 쿼리 파라미터에서 userId 추출
+        const { userId } = req.query;
+
         // workspaceId가 전달되었는지 확인
         if (!workspaceId) {
             return res.status(400).json({
@@ -14,8 +17,16 @@ exports.deleteWorkspace = async (req, res) => {
             });
         }
 
+        // userId가 전달되었는지 확인
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: '쿼리 파라미터에 userId가 누락되었습니다.',
+            });
+        }
+
         // 워크스페이스 삭제 비즈니스 로직을 수행하여 워크스페이스 삭제
-        const result = await workspaceService.deleteWorkspace(workspaceId);
+        const result = await workspaceService.deleteWorkspace(workspaceId, userId);
 
         // 워크스페이스 삭제 로직에 따른 응답과 함께 결과 반환
         return res.status(result.statusCode).json({
