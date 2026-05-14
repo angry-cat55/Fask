@@ -64,3 +64,36 @@ exports.checkPassword = async ({ loginId, email }) => {
 
     return true; // 로그인 아이디와 이메일이 유저 정보와 일치하면 true, 그렇지 않으면 false 반환
 };
+
+// 비밀번호 재설정 비즈니스 로직
+exports.resetPassword = async ({ loginId, newPassword }) => {
+    // 로그인 아이디로 사용자 조회
+    const user = await userModel.findUserByLoginId(loginId);
+
+    // 사용자가 존재하지 않으면, 404 Not Found 에러 발생
+    if (!user) {
+        return {
+            isSuccess: false,
+            message: '해당 아이디를 찾을 수 없습니다.',
+            statusCode: 404,
+        }
+    }
+
+    // 기존 비밀번호와 새 비밀번호가 같은 경우, 309 Conflict 에러 발생
+    if (user.password === newPassword) {
+        return {
+            isSuccess: false,
+            message: '기존 비밀번호와 일치합니다.',
+            statusCode: 409,
+        }
+    }
+
+    // 비밀번호 재설정
+    await userModel.updatePasswordByLoginId({ loginId, newPassword });
+
+    return {
+        isSuccess: true,
+        message: '비밀번호가 성공적으로 재설정되었습니다.',
+        statusCode: 200,
+    }
+}
