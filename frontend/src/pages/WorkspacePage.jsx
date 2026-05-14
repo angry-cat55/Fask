@@ -140,6 +140,11 @@ const Sidebar = ({ active, onSelect, nickname, onLogout }) => {
   const membersButtonRef = useRef(null);
   const membersPanelRef = useRef(null);
   const [inviteUserId, setInviteUserId] = useState('');
+  const [inviteTouched, setInviteTouched] = useState(false);
+  const validateInviteId = (value) => {
+    const regex = /^[a-zA-Z0-9_-]{4,20}$/;
+    return regex.test(value);
+  };
 
   const handleSelect = (itemId) => {
     if (itemId === 'members') {
@@ -147,6 +152,11 @@ const Sidebar = ({ active, onSelect, nickname, onLogout }) => {
         const next = !prev;
         if (next) {
           onSelect('members');
+          setInviteTouched(false);
+        }
+        if (!next) {
+          setInviteUserId('');
+          setInviteTouched(false);
         }
         return next;
       });
@@ -168,6 +178,8 @@ const Sidebar = ({ active, onSelect, nickname, onLogout }) => {
 
       if (!clickedInsidePanel && !clickedOnButton) {
         setIsMembersOpen(false);
+        setInviteUserId('');
+        setInviteTouched(false);
       }
     };
 
@@ -240,9 +252,16 @@ const Sidebar = ({ active, onSelect, nickname, onLogout }) => {
                           <div className="rounded-md border border-cyan-500/20 focus-within:ring-2 focus-within:ring-cyan-400/30 p-0.5">
                             <TextInput
                               value={inviteUserId}
-                              onChange={(event) =>
-                                setInviteUserId(event.target.value)
-                              }
+                              onChange={(event) => {
+                                const v = event.target.value;
+                                setInviteUserId(v);
+                                if (v.trim().length > 0) setInviteTouched(false);
+                              }}
+                              onBlur={(e) => {
+                                if (!e.target.value || e.target.value.trim().length === 0) {
+                                  setInviteTouched(true);
+                                }
+                              }}
                               placeholder="사용자 ID 입력"
                               autoComplete="off"
                               required={false}
@@ -250,16 +269,33 @@ const Sidebar = ({ active, onSelect, nickname, onLogout }) => {
                             />
                           </div>
                         </div>
+                        {inviteTouched && inviteUserId.trim().length === 0 && (
+                          <div className="text-center text-xs text-rose-400">
+                            사용자 ID를 입력해주세요.
+                          </div>
+                        )}
                         <div className="flex items-center justify-center gap-2 pt-1">
                           <button
                             type="button"
-                            className="rounded-md bg-cyan-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-cyan-600"
+                            disabled={
+                              inviteUserId.trim().length === 0 ||
+                              !validateInviteId(inviteUserId)
+                            }
+                            className={`rounded-md px-3 py-1.5 text-xs font-medium text-white transition ${
+                              inviteUserId.trim().length === 0 ||
+                              !validateInviteId(inviteUserId)
+                                ? 'bg-cyan-500/40 cursor-not-allowed'
+                                : 'bg-cyan-500 hover:bg-cyan-600'
+                            }`}
                           >
                             초대
                           </button>
                           <button
                             type="button"
-                            onClick={() => setIsMembersOpen(false)}
+                            onClick={() => {
+                              setIsMembersOpen(false);
+                              setInviteUserId('');
+                            }}
                             className="rounded-md bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-slate-600"
                           >
                             취소
