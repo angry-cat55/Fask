@@ -1,21 +1,24 @@
 const pool = require('../config/db');
 
+// 로그인 아이디로 사용자 정보 조회
 exports.findUserByLoginId = async (loginId) => {
-    const [rows] = await pool.query(
-        'SELECT * FROM users WHERE login_id = ?',
-        [loginId]
-    );
+    // SQL 쿼리: users 테이블에서 loginId에 해당하는 사용자 정보 조회
+    const sql = 'SELECT * FROM users WHERE login_id = ?';
 
+    // SQL 쿼리를 실행하여 로그인 아이디에 해당하는 사용자 정보를 조회
+    const [rows] = await pool.query(sql, [loginId]);
+
+    // 조회된 사용자 정보가 있으면 첫 번째 행을 반환하고, 없으면 null 반환
     return rows[0];
 };
 
+// 회원 데이터 생성
 exports.createUser = async ({ loginId, password, email, nickname }) => {
-    const [result] = await pool.query(
-        `INSERT INTO users 
-        (login_id, password, email, nickname) 
-        VALUES (?, ?, ?, ?)`,
-        [loginId, password, email, nickname]//암호화 할꺼면 password 대신 hashedPassword
-    );
+    // SQL 쿼리: users 테이블에 새로운 사용자 데이터 삽입
+    const sql = `INSERT INTO users (login_id, password, email, nickname) VALUES (?, ?, ?, ?)`;
+
+    // SQL 쿼리를 실행하여 새로운 사용자 데이터를 삽입
+    await pool.query(sql, [loginId, password, email, nickname]); //암호화 할꺼면 password 대신 hashedPassword
 };
 
 // 이메일로 로그인 아이디 조회

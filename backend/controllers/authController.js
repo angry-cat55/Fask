@@ -1,7 +1,8 @@
 const authService = require('../services/authService');
 
-// 클라이언트로부터 전달받은 로그인 정보 추출
+// 로그인 컨트롤러
 exports.login = async (req, res) => {
+    // 클라이언트로부터 전달받은 로그인 정보 추출
     const { loginId, password } = req.body;
 
     // 필수 필드가 모두 채워졌는지 확인

@@ -12,5 +12,5 @@ exports.login = async (loginId, password) => {
         throw error;
     }
 
-    return userInfo;
+    return userInfo; // 로그인 성공 시 유저 정보 반환
 };

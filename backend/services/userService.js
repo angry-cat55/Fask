@@ -1,27 +1,28 @@
 const userModel = require('../models/userModel');
 
-//const bcrypt = require('bcrypt');
-//회원가입 비즈니스 로직
+// const bcrypt = require('bcrypt');
+// 회원가입 비즈니스 로직
 exports.signupUser = async ({ loginId, password, email, nickname }) => {
-    //아이디 중복 확인
+    // 아이디 중복 확인
     const existingUser = await userModel.findUserByLoginId(loginId);
 
     if (existingUser) {
         throw new Error('이미 사용 중인 아이디입니다.');
     }
 
-    //비밀번호 암호화 할꺼면 해도됨
+    // 비밀번호 암호화 할꺼면 해도됨
     // const hashedPassword = await bcrypt.hash(password, 10);
 
     //DB에 저장
     await userModel.createUser({
         loginId,
-        password,//: hashedPassword,//암호화 할꺼면 이것도 바꿔야됨
+        password, // : hashedPassword, // 암호화 할꺼면 이것도 바꿔야됨
         email,
         nickname,
     });
 };
 
+// 아이디 중복 확인 비즈니스 로직
 exports.checkUsername = async (loginId) => {
     // TODO: 아이디 중복 확인 비즈니스 로직 구현
     return userModel.findUserByLoginId(loginId);
