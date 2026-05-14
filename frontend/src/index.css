@@ -8,3 +8,21 @@ body {
 #root {
   min-height: 100svh;
 }
+
+/* 칸반 보드 가로 스크롤바 */
+.kanban-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.kanban-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.kanban-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+}
+
+.kanban-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
