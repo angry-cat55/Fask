@@ -27,8 +27,9 @@ exports.checkUsername = async (loginId) => {
     const trimmedLoginId = loginId.trim();
 
     const existingUser = await userModel.findUserByLoginId(trimmedLoginId);
-
-    return !!existingUser;
+    // 로그인 아이디가 이미 존재하면 true, 그렇지 않으면 false 반환
+    if (existingUser != null) return true;
+    else return false;
 };
 
 // 아이디 찾기 비즈니스 로직

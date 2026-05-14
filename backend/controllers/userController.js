@@ -52,7 +52,7 @@ exports.checkUsername = async (req, res) => {
         // 클라이언트에서 ?username=test123 으로 보낸 값
         const { username } = req.query;
         const loginId = username;
-
+        // 로그인 아이디가 전달되었는지 확인
         if (!loginId || loginId.trim() === '') {
             return res.status(400).json({
                 success: false,
@@ -64,7 +64,7 @@ exports.checkUsername = async (req, res) => {
 
         // service로 중복 확인 요청
         const isDuplicated = await userService.checkUsername(loginId);
-
+        // 중복 확인 결과에 따라 응답 반환
         return res.status(200).json({
             success: true,
             data: {
@@ -74,7 +74,7 @@ exports.checkUsername = async (req, res) => {
 
     } catch (error) {
         console.error('로그인 아이디 중복 확인 오류:', error);
-
+        // 서버 오류 응답 반환
         return res.status(500).json({
             success: false,
             message: '서버 오류가 발생했습니다.',
