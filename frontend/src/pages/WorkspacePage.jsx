@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import TextInput from '../components/ui/TextInput';
 
 // ── SVG Icons ──────────────────────────────────────────────────────────────
@@ -137,11 +137,19 @@ const ProfileView = () => (
 
 const Sidebar = ({ active, onSelect, nickname, onLogout }) => {
   const [isMembersOpen, setIsMembersOpen] = useState(false);
+  const membersButtonRef = useRef(null);
+  const membersPanelRef = useRef(null);
   const [inviteUserId, setInviteUserId] = useState('');
 
   const handleSelect = (itemId) => {
     if (itemId === 'members') {
-      setIsMembersOpen((prev) => !prev);
+      setIsMembersOpen((prev) => {
+        const next = !prev;
+        if (next) {
+          onSelect('members');
+        }
+        return next;
+      });
       return;
     }
 
@@ -149,6 +157,23 @@ const Sidebar = ({ active, onSelect, nickname, onLogout }) => {
     setInviteUserId('');
     onSelect(itemId);
   };
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!isMembersOpen) return;
+      const panel = membersPanelRef.current;
+      const btn = membersButtonRef.current;
+      const clickedInsidePanel = panel && panel.contains(e.target);
+      const clickedOnButton = btn && btn.contains(e.target);
+
+      if (!clickedInsidePanel && !clickedOnButton) {
+        setIsMembersOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMembersOpen]);
 
   return (
     <aside className="flex h-full w-56 shrink-0 flex-col border-r border-white/5 bg-slate-900/60">
@@ -177,6 +202,7 @@ const Sidebar = ({ active, onSelect, nickname, onLogout }) => {
               return (
                 <React.Fragment key={item.id}>
                   <button
+                    ref={item.id === 'members' ? membersButtonRef : null}
                     type="button"
                     onClick={() => handleSelect(item.id)}
                     className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition ${
@@ -202,7 +228,10 @@ const Sidebar = ({ active, onSelect, nickname, onLogout }) => {
                   </button>
 
                   {item.id === 'members' && isMembersOpen && (
-                    <div className="mt-2 ml-1 rounded-2xl border border-white/10 bg-slate-950/60 p-4 shadow-lg shadow-black/10">
+                    <div
+                      ref={membersPanelRef}
+                      className="mt-2 ml-1 rounded-2xl border border-white/10 bg-slate-950/60 p-4 shadow-lg shadow-black/10"
+                    >
                       <div className="space-y-3 text-xs text-slate-400">
                         <div className="text-sm font-semibold text-white">
                           멤버 초대
