@@ -3,7 +3,9 @@ const userService = require('../services/userService');
 // 회원가입 컨트롤러
 exports.signup = async (req, res) => {
     try {
+        // 클라이언트로부터 전달받은 회원가입 정보 추출
         const { loginId, password, email, nickname } = req.body;
+
         // 필수 필드가 모두 전달되었는지 확인
         if (!loginId || !password || !email || !nickname) {
             return res.status(400).json({
@@ -11,6 +13,7 @@ exports.signup = async (req, res) => {
                 message: '필드 중에 공백이 있는 경우가 있습니다.',
             });
         }
+
         // 전달받은 회원가입 정보 로그로 출력 (비밀번호는 숨김 처리)
         console.log('전달받은 회원가입 정보:', {
             loginId,
@@ -18,59 +21,72 @@ exports.signup = async (req, res) => {
             email,
             nickname,
         });
-        // 회원가입 userService로 받은 정보를 전달
+
+        // 회원가입 비즈니스 로직을 수행
         await userService.signupUser({
             loginId,
             password,
             email,
             nickname,
         });
+
         // 회원가입 성공 응답 반환
         return res.status(201).json({
             success: true,
-            message: '회원가입 성공',
+            data: {
+                nickname: nickname,
+            }
         });
 
-    } catch (error) {
-        console.error('회원가입 오류:', error);
+    } catch (error) { // 회원가입 과정에서 발생한 에러 처리
+        console.error('회원가입 오류: ', error);
 
-        return res.status(500).json({
+        return res.status(error.statusCode || 500).json({
             success: false,
             message: error.message || '서버 오류가 발생했습니다.',
         });
     }
 };
 
-exports.checkUsername = (req, res) => {
-    // 클라이언트로부터 전달받은 로그인 아이디 추출
-    const { username } = req.query;
-    const loginId = username; // 클라이언트에서 전달된 username을 loginId로 사용
+// 아이디 중복 확인 컨트롤러
+exports.checkUsername = async (req, res) => {
+    try {
+        // 클라이언트에서 ?username=test123 으로 보낸 값
+        const { username } = req.query;
+        const loginId = username;
 
-    // 로그인 아이디가 전달되었는지 확인
-    if (!loginId) {
-        // 로그인 아이디가 없는 경우 400 Bad Request 응답 반환
-        return res.status(400).json({
+        // 로그인 아이디가 전달되었는지 확인
+        if (!loginId || loginId.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                message: '아이디 필드가 누락되었습니다.',
+            });
+        }
+
+        console.log('중복 확인할 로그인 아이디:', loginId);
+
+        // service로 중복 확인 요청
+        const isDuplicated = await userService.checkUsername(loginId);
+
+        // 중복 확인 결과에 따라 응답 반환
+        return res.status(200).json({
+            success: true,
+            data: {
+                isDuplicated, // true: 아이디가 이미 존재하여 중복, false: 아이디가 존재하지 않아 사용 가능
+            },
+        });
+    } catch (error) { // 아이디 중복 확인 과정에서 발생한 에러 처리
+        console.error('로그인 아이디 중복 확인 오류:', error);
+
+        // 서버 오류 응답 반환
+        return res.status(500).json({
             success: false,
-            message: '아이디 필드가 누락되었습니다.',
+            message: '서버 오류가 발생했습니다.',
         });
     }
-
-    // 전달받은 로그인 아이디 로그로 출력
-    console.log('중복 확인할 로그인 아이디:', loginId);
-
-    /*
-     * TODO: 실제 로그인 아이디 중복 확인 로직 구현 (데이터베이스에서 해당 로그인 아이디를 가진 사용자가 있는지 확인)
-     */
-
-    // 로그인 아이디 중복 확인 성공 시 200 OK 응답과 함께 결과 반환
-    return res.status(200).json({
-        success: true,
-        data: {
-            isAvailable: true, // true: 사용 가능한 아이디일 때, false: 이미 존재하는 아이디일 때
-        },
-    });
 };
 
+// 아이디 찾기 컨트롤러
 exports.findId = async (req, res) => {
     // 클라이언트로부터 전달받은 이메일 추출
     const { email } = req.body;
@@ -89,24 +105,28 @@ exports.findId = async (req, res) => {
 
     try {
         // 아이디 찾기 비즈니스 로직을 수행하여 로그인 아이디 조회
-        const loginId = await userService.findIdByEmail(email);
+        const result = await userService.findIdByEmail(email);
 
-        // 아이디 찾기 성공 시 200 OK 응답과 함께 결과 반환
-        return res.status(200).json({
-            success: true,
+        // 아이디 찾기 로직에 따른 응답과 함께 결과 반환
+        return res.status(result.statusCode).json({
+            success: result.isSuccess,
             data: {
-                loginId: loginId,
+                loginId: result.data.loginId,
             },
+            message: result.message,
         });
     } catch (error) { // 아이디 찾기 과정에서 발생한 에러 처리
-        return res.status(error.statusCode || 500).json({
+        console.error('아이디 찾기 오류:', error);
+
+        return res.status(500).json({
             success: false,
-            message: error.message || '서버 내부 오류가 발생하였습니다.',
+            message: '서버 내부 오류가 발생하였습니다.',
         });
     }
 };
 
-exports.checkPassword = (req, res) => {
+// 아이디와 이메일을 받아 유저 정보가 일치하여 비밀번호를 변경 가능한지 확인하는 컨트롤러
+exports.checkPassword = async (req, res) => {
     // 클라이언트로부터 전달받은 로그인 아이디와 이메일 추출
     const { loginId, email } = req.body;
 
@@ -130,25 +150,32 @@ exports.checkPassword = (req, res) => {
     console.log('비밀번호 찾기 요청 로그인 아이디:', loginId);
     console.log('비밀번호 찾기 요청 이메일:', email);
 
-    /*
-     * TODO: 실제 비밀번호 찾기 확인 로직 구현
-     * 1. 데이터베이스에서 loginId를 가진 사용자가 있는지 확인
-     * 2. 해당 사용자의 이메일과 전달받은 email이 일치하는지 확인
-     * 3. 일치하면 success: true 반환
-     * 4. 일치하지 않으면 success: false 반환
-     */
+    try {
+        // 비밀번호 확인 비즈니스 로직을 수행하여 결과 조회
+        const isCorrect = await userService.checkPassword({ loginId, email });
 
-    // 임시 응답: DB 연결 전이므로 항상 성공 처리
-    return res.status(200).json({
-        success: true,
-        message: '본인 확인이 완료되었습니다.',
-    });
+        // 비밀번호 확인 성공 시 200 OK 응답과 함께 결과 반환
+        return res.status(200).json({
+            success: true,
+            data: {
+                isCorrect: isCorrect, // true: 아이디와 이메일이 올바르게 입력되어 비밀번호 재설정 가능, false: 일치하지 않음
+            },
+        });
+    } catch (error) { // 비밀번호 확인 과정에서 발생한 에러 처리
+        console.error('비밀번호 재설정 가능 여부 확인 오류:', error);
 
-}; 4
+        return res.status(500).json({
+            success: false,
+            message: '서버 내부 오류가 발생하였습니다.',
+        });
+    }
+};
 
-exports.resetPassword = (req, res) => {
+// 비밀번호 재설정 컨트롤러
+exports.resetPassword = async (req, res) => {
     // 클라이언트로부터 전달받은 로그인 아이디와 새 비밀번호 추출
     const { loginId, newPassword } = req.body;
+
     // 로그인 아이디가 전달되었는지 확인
     if (!loginId) {
         return res.status(400).json({
@@ -156,6 +183,7 @@ exports.resetPassword = (req, res) => {
             message: '아이디 필드가 누락되었습니다.',
         });
     }
+
     // 새 비밀번호가 전달되었는지 확인
     if (!newPassword) {
         return res.status(400).json({
@@ -163,20 +191,58 @@ exports.resetPassword = (req, res) => {
             message: '새 비밀번호 필드가 누락되었습니다.',
         });
     }
+
     // 전달받은 값 로그로 출력 (새 비밀번호는 숨김 처리)
     console.log('비밀번호 재설정 요청 로그인 아이디:', loginId);
     console.log('비밀번호 재설정 요청 새 비밀번호:', '[숨김]');
-    /*
-     * TODO: 실제 비밀번호 변경 로직 구현
-     * 1. 데이터베이스에서 loginId를 가진 사용자가 있는지 확인
-     * 2. 사용자가 존재하지 않으면 실패 응답 반환
-     * 3. newPassword를 암호화
-     * 4. 암호화된 비밀번호를 DB에 저장
-     * 5. 성공 응답 반환
-     */
-    // 임시 응답: DB 연결 전이므로 항상 성공 처리
-    return res.status(200).json({
-        success: true,
-        message: '비밀번호가 성공적으로 재설정되었습니다.',
-    });
+
+    try {
+        // 비밀번호 재설정 비즈니스 로직을 수행하여 비밀번호 변경
+        const result = await userService.resetPassword({ loginId, newPassword });
+
+        // 비밀번호 재설정 로직에 따른 응답과 함께 결과 반환
+        return res.status(result.statusCode).json({
+            success: result.isSuccess,
+            message: result.message,
+        });
+    } catch (error) { // 비밀번호 재설정 과정에서 발생한 에러 처리
+        console.error('비밀번호 재설정 오류:', error);
+
+        return res.status(500).json({
+            success: false,
+            message: '서버 내부 오류가 발생하였습니다.',
+        });
+    }
+};
+
+// 유저의 참가한 워크스페이스 목록 조회 컨트롤러
+exports.getWorkspaces = async (req, res) => {
+    // 클라이언트로부터 전달받은 userId 추출
+    const { userId } = req.params;
+
+    // userId가 전달되었는지 확인
+    if (!userId) {
+        return res.status(400).json({
+            success: false,
+            message: '경로 파라미터에 userId가 누락되었습니다.',
+        });
+    }
+
+    try {
+        // 유저의 참가한 워크스페이스 목록 조회 비즈니스 로직을 수행
+        const result = await userService.getWorkspaces(userId);
+
+        // 워크스페이스 목록 조회 로직에 따른 응답과 함께 결과 반환
+        return res.status(result.statusCode).json({
+            success: result.isSuccess,
+            data: result.data,
+        });
+    } catch (error) { // 워크스페이스 목록 조회 과정에서 발생한 에러 처리
+        console.error('워크스페이스 목록 조회 오류:', error);
+
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || '서버 내부 오류가 발생하였습니다.',
+        });
+    }
 };

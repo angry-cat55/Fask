@@ -22,4 +22,8 @@ router.post('/check-password', userController.checkPassword);
 // /api/users/reset-password 요청을 userController의 resetPassword 컨트롤러로 전달
 router.patch('/reset-password', userController.resetPassword);
 
+// 유저의 참가한 워크스페이스 목록 조회 요청 API
+// /api/users/{userId}/workspaces 요청을 userController의 getWorkspaces 컨트롤러로 전달
+router.get('/:userId/workspaces', userController.getWorkspaces);
+
 module.exports = router;
