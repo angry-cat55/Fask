@@ -1,23 +1,47 @@
 import React, { useState } from 'react';
+import TaskModal from './TaskModal';
 
-// 칸반 보드 컬럼 정의
 const COLUMNS = [
-  { id: 'todo',       title: '할 일',   accent: 'bg-slate-500',   textAccent: 'text-slate-300' },
-  { id: 'inprogress', title: '진행 중', accent: 'bg-cyan-500',    textAccent: 'text-cyan-300'  },
-  { id: 'review',     title: '검토 중', accent: 'bg-yellow-500',  textAccent: 'text-yellow-300'},
-  { id: 'done',       title: '완료',    accent: 'bg-green-500',   textAccent: 'text-green-300' },
+  { id: 'TODO',        title: '할 일',   accent: 'bg-slate-500',   textAccent: 'text-slate-300' },
+  { id: 'IN_PROGRESS', title: '진행 중', accent: 'bg-cyan-500',    textAccent: 'text-cyan-300'  },
+  { id: 'REVIEW',      title: '검토 중', accent: 'bg-yellow-500',  textAccent: 'text-yellow-300'},
+  { id: 'DONE',        title: '완료',    accent: 'bg-green-500',   textAccent: 'text-green-300' },
 ];
 
-// 초기 카드 데이터 (추후 API 연동 예정)
 const INITIAL_CARDS = {
-  todo:       [],
-  inprogress: [],
-  review:     [],
-  done:       [],
+  TODO:        [],
+  IN_PROGRESS: [],
+  REVIEW:      [],
+  DONE:        [],
 };
 
 const KanbanBoard = () => {
   const [cards, setCards] = useState(INITIAL_CARDS);
+  const [modal, setModal] = useState(null); // { colId, card }
+
+  const openAdd  = (colId) => setModal({ colId, card: { status: colId } });
+  const openEdit = (colId, card) => setModal({ colId, card });
+  const closeModal = () => setModal(null);
+
+  const handleSave = (form) => {
+    if (modal.card.id) {
+      // 수정: 기존 카드 업데이트 (상태 변경 시 컬럼 이동)
+      setCards((prev) => {
+        const next = { ...prev };
+        next[modal.colId] = next[modal.colId].filter((c) => c.id !== modal.card.id);
+        next[form.status] = [...next[form.status], { ...modal.card, ...form }];
+        return next;
+      });
+    } else {
+      // 추가: 선택된 상태 컬럼에 새 카드 삽입
+      const newCard = { id: Date.now(), ...form };
+      setCards((prev) => ({
+        ...prev,
+        [form.status]: [...prev[form.status], newCard],
+      }));
+    }
+    closeModal();
+  };
 
   return (
     <div className="flex h-full flex-col gap-6 p-8 overflow-hidden">
@@ -28,11 +52,11 @@ const KanbanBoard = () => {
       </div>
 
       {/* 컬럼 영역 */}
-      <div className="flex flex-1 gap-4 overflow-x-auto pb-2">
+      <div className="kanban-scroll flex flex-1 gap-4 overflow-x-auto pb-2">
         {COLUMNS.map((col) => (
           <div
             key={col.id}
-            className="flex w-64 shrink-0 flex-col gap-3 rounded-2xl border border-white/5 bg-white/[0.03] p-4"
+            className="flex w-64 shrink-0 flex-col gap-3 rounded-2xl border border-white/5 bg-white/3 p-4"
           >
             {/* 컬럼 헤더 */}
             <div className="flex items-center justify-between">
@@ -45,7 +69,15 @@ const KanbanBoard = () => {
               </span>
             </div>
 
-            {/* 카드 목록 — 추후 KanbanCard 컴포넌트로 교체 예정 */}
+            {/* 카드 추가 버튼 */}
+            <button
+              onClick={() => openAdd(col.id)}
+              className="flex items-center gap-1.5 rounded-xl border border-dashed border-white/10 px-3 py-2 text-sm text-slate-600 transition hover:border-white/20 hover:text-slate-400"
+            >
+              <span className="text-base leading-none">+</span> 카드 추가
+            </button>
+
+            {/* 카드 목록 */}
             <div className="flex flex-1 flex-col gap-2">
               {cards[col.id].length === 0 ? (
                 <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-white/5 py-8">
@@ -53,18 +85,22 @@ const KanbanBoard = () => {
                 </div>
               ) : (
                 cards[col.id].map((card) => (
-                  // TODO: <KanbanCard key={card.id} card={card} />
-                  <div key={card.id} className="rounded-xl border border-white/5 bg-slate-900 p-3 text-sm text-white">
-                    {card.title}
+                  <div
+                    key={card.id}
+                    onClick={() => openEdit(col.id, card)}
+                    className="cursor-pointer rounded-xl border border-white/5 bg-slate-900 p-3 text-sm text-white transition hover:border-white/20 hover:bg-slate-800"
+                  >
+                    <p className="font-medium">{card.title}</p>
+                    {card.content && (
+                      <p className="mt-1 text-xs text-slate-500 line-clamp-2">{card.content}</p>
+                    )}
+                    {card.endTime && (
+                      <p className="mt-2 text-xs text-slate-600">{card.endTime}</p>
+                    )}
                   </div>
                 ))
               )}
             </div>
-
-            {/* 카드 추가 버튼 — 추후 KanbanAddCard 컴포넌트로 교체 예정 */}
-            <button className="flex items-center gap-1.5 rounded-xl border border-dashed border-white/10 px-3 py-2 text-sm text-slate-600 transition hover:border-white/20 hover:text-slate-400">
-              <span className="text-base leading-none">+</span> 카드 추가
-            </button>
           </div>
         ))}
 
@@ -74,6 +110,14 @@ const KanbanBoard = () => {
           <span className="text-sm">컬럼 추가</span>
         </button>
       </div>
+
+      {modal && (
+        <TaskModal
+          task={modal.card}
+          onSave={handleSave}
+          onClose={closeModal}
+        />
+      )}
     </div>
   );
 };

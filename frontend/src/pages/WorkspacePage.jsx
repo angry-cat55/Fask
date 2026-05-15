@@ -23,12 +23,6 @@ const SummaryView = () => (
   </div>
 );
 
-const MembersView = () => (
-  <div className="p-8">
-    <h2 className="text-2xl font-bold text-white">멤버 초대</h2>
-  </div>
-);
-
 const ProfileView = () => (
   <div className="p-8">
     <h2 className="text-2xl font-bold text-white">프로필</h2>
@@ -51,7 +45,6 @@ const WorkspacePage = ({ user, onLogout }) => {
       case 'chat':                return <ChatView />;
       case 'kanban':              return <KanbanView />;
       case 'summary':             return <SummaryView />;
-      case 'members':             return <MembersView />;
       case 'profile':             return <ProfileView />;
       case 'workspace-settings':  return <WorkspaceSettingsView />;
       default:                    return <InboxView />;
