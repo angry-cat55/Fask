@@ -1,5 +1,40 @@
 const pool = require('../config/db');
 
+// workspaces 테이블에 워크스페이스 생성
+exports.createWorkspace = async ({ name, summary_period, auto_task_period }) => {
+    const sql = `
+        INSERT INTO workspaces
+        (name, summary_period, auto_task_period)
+        VALUES (?, ?, ?)
+    `;
+
+    const [result] = await pool.query(sql, [
+        name,
+        summary_period,
+        auto_task_period,
+    ]);
+
+    return {
+        workspaceId: result.insertId,
+        name,
+    };
+};
+
+// workspace_members 테이블에 생성자 추가
+exports.addWorkspaceMember = async ({ workspaceId, userId, role }) => {
+    const sql = `
+        INSERT INTO workspace_members
+        (workspace_id, user_id, role)
+        VALUES (?, ?, ?)
+    `;
+
+    await pool.query(sql, [
+        workspaceId,
+        userId,
+        role,
+    ]);
+};
+
 // workspaceId로 워크스페이스 조회
 exports.findWorkspaceById = async (workspaceId) => {
     // SQL 쿼리: workspaces 테이블에서 workspace_id에 해당하는 워크스페이스 정보 조회

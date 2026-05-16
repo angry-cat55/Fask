@@ -1,5 +1,43 @@
-const userModel = require('../models/userModel');
 const workspaceModel = require('../models/workspaceModel');
+const userModel = require('../models/userModel');
+
+// 워크스페이스 생성 비즈니스 로직
+exports.createWorkspace = async ({ userId, name, summary_period, auto_task_period }) => {
+    // 1. 유저 존재 확인
+    const user = await userModel.findUserById(userId);
+
+    if (!user) {
+        const error = new Error('존재하지 않는 사용자입니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. 워크스페이스 이름 공백 제거
+    const trimmedName = name.trim();
+
+    if (trimmedName === '') {
+        const error = new Error('워크스페이스 이름을 입력해주세요.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // 3. workspaces 테이블에 워크스페이스 생성
+    const workspace = await workspaceModel.createWorkspace({
+        name: trimmedName,
+        summary_period,
+        auto_task_period,
+    });
+
+    // 4. workspace_members 테이블에 생성자 추가
+    await workspaceModel.addWorkspaceMember({
+        workspaceId: workspace.workspaceId,
+        userId,
+        role: 'LEADER',
+    });
+
+    // 5. controller로 반환
+    return workspace;
+};
 
 // 유저가 참가한 워크스페이스 목록 조회 비즈니스 로직
 exports.getWorkspaces = async (userId) => {
