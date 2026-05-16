@@ -32,7 +32,7 @@ exports.createWorkspace = async ({ userId, name, summary_period, auto_task_perio
     await workspaceModel.addWorkspaceMember({
         workspaceId: workspace.workspaceId,
         userId,
-        role: 'OWNER',
+        role: 'LEADER',
     });
 
     // 5. controller로 반환
