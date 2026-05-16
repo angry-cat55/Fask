@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
 
-const STATUS_OPTIONS = [
-  { value: 'TODO',        label: '할 일'   },
-  { value: 'IN_PROGRESS', label: '진행 중' },
-  { value: 'REVIEW',      label: '검토 중' },
-  { value: 'DONE',        label: '완료'    },
-];
-
-const TaskModal = ({ task, onSave, onClose }) => {
+const TaskModal = ({ task, columns, onSave, onDelete, onClose }) => {
   const [form, setForm] = useState({
     title:     task.title                   || '',
     content:   task.content                 || '',
@@ -27,7 +20,9 @@ const TaskModal = ({ task, onSave, onClose }) => {
         className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="mb-5 text-lg font-bold text-white">{task.id ? '태스크 수정' : '태스크 추가'}</h3>
+        <h3 className="mb-5 text-lg font-bold text-white">
+          {task.taskId ? '태스크 수정' : '태스크 추가'}
+        </h3>
 
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
@@ -81,26 +76,38 @@ const TaskModal = ({ task, onSave, onClose }) => {
               onChange={(e) => set('status', e.target.value)}
               className="rounded-xl border border-white/10 bg-slate-800 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400/50"
             >
-              {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              {columns.map((col) => (
+                <option key={col.id} value={col.id}>{col.title}</option>
               ))}
             </select>
           </div>
         </div>
 
-        <div className="mt-5 flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="rounded-xl px-4 py-2 text-sm text-slate-400 transition hover:text-white"
-          >
-            취소
-          </button>
-          <button
-            onClick={() => onSave(form)}
-            className="rounded-xl bg-cyan-500/20 px-4 py-2 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-500/30"
-          >
-            저장
-          </button>
+        <div className="mt-5 flex items-center justify-between">
+          {onDelete ? (
+            <button
+              onClick={onDelete}
+              className="rounded-xl px-4 py-2 text-sm text-rose-400 transition hover:bg-rose-500/10 hover:text-rose-300"
+            >
+              삭제
+            </button>
+          ) : (
+            <span />
+          )}
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="rounded-xl px-4 py-2 text-sm text-slate-400 transition hover:text-white"
+            >
+              취소
+            </button>
+            <button
+              onClick={() => onSave(form)}
+              className="rounded-xl bg-cyan-500/20 px-4 py-2 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-500/30"
+            >
+              저장
+            </button>
+          </div>
         </div>
       </div>
     </div>

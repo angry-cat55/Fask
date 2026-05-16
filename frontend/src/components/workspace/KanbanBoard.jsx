@@ -1,47 +1,160 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TaskModal from './TaskModal';
 
 const COLUMNS = [
-  { id: 'TODO',        title: '할 일',   accent: 'bg-slate-500',   textAccent: 'text-slate-300' },
-  { id: 'IN_PROGRESS', title: '진행 중', accent: 'bg-cyan-500',    textAccent: 'text-cyan-300'  },
-  { id: 'REVIEW',      title: '검토 중', accent: 'bg-yellow-500',  textAccent: 'text-yellow-300'},
-  { id: 'DONE',        title: '완료',    accent: 'bg-green-500',   textAccent: 'text-green-300' },
+  { id: 'TODO',        title: '할 일',   accent: 'bg-slate-500',  textAccent: 'text-slate-300' },
+  { id: 'IN_PROGRESS', title: '진행 중', accent: 'bg-cyan-500',   textAccent: 'text-cyan-300'  },
+  { id: 'DONE',        title: '완료',    accent: 'bg-green-500',  textAccent: 'text-green-300' },
 ];
 
-const INITIAL_CARDS = {
-  TODO:        [],
-  IN_PROGRESS: [],
-  REVIEW:      [],
-  DONE:        [],
+// ── 더미 데이터 (백엔드 API 완성 전 임시) ───────────────────────────────────
+const DUMMY_KANBAN_ID = 1;
+const DUMMY_TASKS = [
+  {
+    taskId: 1, kanbanId: 1, managerId: 1,
+    title: '로고 이미지 수정', content: '더 멋지게 변경',
+    startTime: '2026-05-01', endTime: '2026-05-10', status: 'TODO',
+  },
+  {
+    taskId: 2, kanbanId: 1, managerId: 1,
+    title: '메인 페이지 레이아웃', content: '반응형 레이아웃 구성',
+    startTime: '2026-05-05', endTime: '2026-05-15', status: 'IN_PROGRESS',
+  },
+  {
+    taskId: 3, kanbanId: 1, managerId: 1,
+    title: '로그인 API 연동', content: null,
+    startTime: '2026-05-01', endTime: '2026-05-08', status: 'DONE',
+  },
+];
+// status 가능 값: 'TODO' | 'IN_PROGRESS' | 'DONE'
+
+let mockTasks = [...DUMMY_TASKS];
+let nextTaskId = 100;
+
+const mockApi = {
+  fetchBoard: () =>
+    Promise.resolve({ success: true, data: [...mockTasks] }),
+
+  createTask: () => {
+    const taskId = nextTaskId++;
+    return Promise.resolve({ success: true, data: { taskId, kanbanId: DUMMY_KANBAN_ID } });
+  },
+
+  updateTask: (taskId, body) => {
+    mockTasks = mockTasks.map((t) =>
+      t.taskId === taskId ? { ...t, ...body } : t
+    );
+    return Promise.resolve({ success: true });
+  },
+
+  deleteTask: (taskId) => {
+    mockTasks = mockTasks.filter((t) => t.taskId !== taskId);
+    return Promise.resolve({ ok: true, status: 204 });
+  },
+};
+// ────────────────────────────────────────────────────────────────────────────
+
+const groupByStatus = (tasks) => {
+  const grouped = { TODO: [], IN_PROGRESS: [], DONE: [] };
+  tasks.forEach((task) => {
+    if (grouped[task.status]) grouped[task.status].push(task);
+  });
+  return grouped;
 };
 
-const KanbanBoard = () => {
-  const [cards, setCards] = useState(INITIAL_CARDS);
-  const [modal, setModal] = useState(null); // { colId, card }
+const KanbanBoard = ({ userId }) => {
+  const [cards, setCards] = useState({ TODO: [], IN_PROGRESS: [], DONE: [] });
+  const [kanbanId, setKanbanId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(null);
+
+  // 칸반 보드 조회: GET /api/workspaces/{workspaceId}/kanban
+  useEffect(() => {
+    (async () => {
+      try {
+        const result = await mockApi.fetchBoard();
+        if (result.success && Array.isArray(result.data)) {
+          setCards(groupByStatus(result.data));
+          if (result.data[0]?.kanbanId) setKanbanId(result.data[0].kanbanId);
+        }
+      } catch (err) {
+        console.error('칸반 조회 오류:', err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   const openAdd  = (colId) => setModal({ colId, card: { status: colId } });
   const openEdit = (colId, card) => setModal({ colId, card });
   const closeModal = () => setModal(null);
 
-  const handleSave = (form) => {
-    if (modal.card.id) {
-      // 수정: 기존 카드 업데이트 (상태 변경 시 컬럼 이동)
-      setCards((prev) => {
-        const next = { ...prev };
-        next[modal.colId] = next[modal.colId].filter((c) => c.id !== modal.card.id);
-        next[form.status] = [...next[form.status], { ...modal.card, ...form }];
-        return next;
-      });
+  const handleSave = async (form) => {
+    if (modal.card.taskId) {
+      // 태스크 수정: PATCH /api/tasks/{taskId}
+      const result = await mockApi.updateTask(modal.card.taskId, { userId, kanbanId, ...form });
+      if (result.success) {
+        setCards((prev) => {
+          const next = { ...prev };
+          next[modal.colId] = next[modal.colId].filter((c) => c.taskId !== modal.card.taskId);
+          next[form.status] = [...next[form.status], { ...modal.card, ...form }];
+          return next;
+        });
+        closeModal();
+      } else {
+        alert(result.message || '수정에 실패했습니다.');
+      }
     } else {
-      // 추가: 선택된 상태 컬럼에 새 카드 삽입
-      const newCard = { id: Date.now(), ...form };
+      // 태스크 추가: POST /api/workspaces/{workspaceId}/tasks → PATCH /api/tasks/{taskId}
+      const createResult = await mockApi.createTask();
+      if (!createResult.success) {
+        alert(createResult.message || '태스크 생성에 실패했습니다.');
+        return;
+      }
+      const newTaskId   = createResult.data.taskId;
+      const newKanbanId = createResult.data.kanbanId ?? kanbanId;
+
+      const patchResult = await mockApi.updateTask(newTaskId, { userId, kanbanId: newKanbanId, ...form });
+      if (patchResult.success) {
+        setCards((prev) => ({
+          ...prev,
+          [form.status]: [
+            ...prev[form.status],
+            { taskId: newTaskId, kanbanId: newKanbanId, ...form },
+          ],
+        }));
+        if (newKanbanId && !kanbanId) setKanbanId(newKanbanId);
+        closeModal();
+      } else {
+        alert(patchResult.message || '태스크 저장에 실패했습니다.');
+      }
+    }
+  };
+
+  // 태스크 삭제: DELETE /api/tasks/{taskId}
+  const handleDelete = async () => {
+    if (!window.confirm('태스크를 삭제하시겠습니까?')) return;
+    const { taskId } = modal.card;
+    const { colId } = modal;
+    const res = await mockApi.deleteTask(taskId);
+    if (res.status === 204 || res.ok) {
       setCards((prev) => ({
         ...prev,
-        [form.status]: [...prev[form.status], newCard],
+        [colId]: prev[colId].filter((c) => c.taskId !== taskId),
       }));
+      closeModal();
+    } else {
+      alert('삭제에 실패했습니다.');
     }
-    closeModal();
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <p className="text-sm text-slate-500">불러오는 중...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col gap-6 p-8 overflow-hidden">
@@ -52,11 +165,11 @@ const KanbanBoard = () => {
       </div>
 
       {/* 컬럼 영역 */}
-      <div className="kanban-scroll flex flex-1 gap-4 overflow-x-auto pb-2">
+      <div className="flex flex-1 gap-4 overflow-hidden">
         {COLUMNS.map((col) => (
           <div
             key={col.id}
-            className="flex w-64 shrink-0 flex-col gap-3 rounded-2xl border border-white/5 bg-white/3 p-4"
+            className="flex flex-1 flex-col gap-3 rounded-2xl border border-white/5 bg-white/3 p-4"
           >
             {/* 컬럼 헤더 */}
             <div className="flex items-center justify-between">
@@ -86,7 +199,7 @@ const KanbanBoard = () => {
               ) : (
                 cards[col.id].map((card) => (
                   <div
-                    key={card.id}
+                    key={card.taskId}
                     onClick={() => openEdit(col.id, card)}
                     className="cursor-pointer rounded-xl border border-white/5 bg-slate-900 p-3 text-sm text-white transition hover:border-white/20 hover:bg-slate-800"
                   >
@@ -95,7 +208,7 @@ const KanbanBoard = () => {
                       <p className="mt-1 text-xs text-slate-500 line-clamp-2">{card.content}</p>
                     )}
                     {card.endTime && (
-                      <p className="mt-2 text-xs text-slate-600">{card.endTime}</p>
+                      <p className="mt-2 text-xs text-slate-600">{card.endTime?.slice(0, 10)}</p>
                     )}
                   </div>
                 ))
@@ -103,18 +216,14 @@ const KanbanBoard = () => {
             </div>
           </div>
         ))}
-
-        {/* 컬럼 추가 버튼 — 추후 구현 예정 */}
-        <button className="flex w-56 shrink-0 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/10 text-slate-700 transition hover:border-white/20 hover:text-slate-500">
-          <span className="text-2xl">+</span>
-          <span className="text-sm">컬럼 추가</span>
-        </button>
       </div>
 
       {modal && (
         <TaskModal
           task={modal.card}
+          columns={COLUMNS}
           onSave={handleSave}
+          onDelete={modal.card.taskId ? handleDelete : null}
           onClose={closeModal}
         />
       )}
