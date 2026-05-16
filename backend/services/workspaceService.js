@@ -1,4 +1,42 @@
+const userModel = require('../models/userModel');
 const workspaceModel = require('../models/workspaceModel');
+
+// 유저가 참가한 워크스페이스 목록 조회 비즈니스 로직
+exports.getWorkspaces = async (userId) => {
+    // userId가 존재하는지 확인
+    const user = await userModel.findUserById(userId);
+
+    // 사용자가 존재하지 않으면 404 Not Found 에러 발생
+    if (!user) {
+        const error = new Error('해당 사용자를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 유저가 참가한 워크스페이스 목록 조회
+    const workspaces = await workspaceModel.findWorkspacesByUserId(userId);
+
+    // workspaces가 null/undefined일 수 있으므로 안전하게 처리
+    if (!workspaces || workspaces.length === 0) {
+        return {
+            isSuccess: true,
+            statusCode: 200,
+            data: {
+                workspaces: [],
+                count: 0,
+            },
+        };
+    }
+
+    return {
+        isSuccess: true,
+        statusCode: 200,
+        data: {
+            workspaces: workspaces,
+            count: workspaces.length,
+        },
+    };
+}
 
 // 워크스페이스 삭제 비즈니스 로직
 exports.deleteWorkspace = async (workspaceId, userId) => {
