@@ -15,7 +15,9 @@ const ChatView = () => (
   </div>
 );
 
-const KanbanView = () => <KanbanBoard />;
+const KanbanView = ({ user }) => (
+  <KanbanBoard userId={user?.userId} workspaceId={user?.workspaceId} />
+);
 
 const SummaryView = () => (
   <div className="p-8">
@@ -43,7 +45,7 @@ const WorkspacePage = ({ user, onLogout }) => {
     switch (activeMenu) {
       case 'inbox':               return <InboxView />;
       case 'chat':                return <ChatView />;
-      case 'kanban':              return <KanbanView />;
+      case 'kanban':              return <KanbanView user={user} />;
       case 'summary':             return <SummaryView />;
       case 'profile':             return <ProfileView />;
       case 'workspace-settings':  return <WorkspaceSettingsView />;
