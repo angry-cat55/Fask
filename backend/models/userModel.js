@@ -1,5 +1,14 @@
 const pool = require('../config/db');
 
+// 유저 아이디로 사용자 정보 조회
+exports.findUserById = async (userId) => {
+    const sql = 'SELECT * FROM users WHERE user_id = ?';
+
+    const [rows] = await pool.query(sql, [userId]);
+
+    return rows[0] || null;
+};
+
 // 로그인 아이디로 사용자 정보 조회
 exports.findUserByLoginId = async (loginId) => {
     // SQL 쿼리: users 테이블에서 loginId에 해당하는 사용자 정보 조회

@@ -1,5 +1,45 @@
 const workspaceService = require('../services/workspaceService');
 
+// 워크스페이스 생성 컨트롤러
+exports.createWorkspace = async (req, res) => {
+    try {
+        const { userId, name, summary_period, auto_task_period } = req.body;
+
+        // 필수 필드 확인
+        if (!userId || !name || !summary_period || !auto_task_period) {
+            return res.status(400).json({
+                success: false,
+                message: '필수 입력값이 누락되었습니다.',
+            });
+        }
+
+        // service로 데이터 전달
+        const workspace = await workspaceService.createWorkspace({
+            userId,
+            name,
+            summary_period,
+            auto_task_period,
+        });
+
+        // 성공 응답
+        return res.status(201).json({
+            success: true,
+            message: '워크스페이스 생성 성공',
+            data: {
+                workspaceId: workspace.workspaceId,
+                name: workspace.name,
+            },
+        });
+
+    } catch (error) {
+        console.error('워크스페이스 생성 오류:', error);
+
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || '서버 오류가 발생했습니다.',
+        });
+    }
+};
 // 워크스페이스 삭제 컨트롤러
 exports.deleteWorkspace = async (req, res) => {
     try {
