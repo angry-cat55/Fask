@@ -2,9 +2,14 @@ const express = require('express');
 const router = express.Router();
 const workspaceController = require('../controllers/workspaceController');
 
+
 //워크스페이스 생성 요청 API
 // /api/workspaces 요청을 workspaceController의 createWorkspace 컨트롤러로 전달
 router.post('/', workspaceController.createWorkspace);
+
+// 워크스페이스 수정 요청 API
+// /api/workspaces/{workspaceId} 요청을 workspaceController의 updateWorkspace 컨트롤러로 전달
+router.patch('/:workspaceId', workspaceController.updateWorkspace);
 
 // 유저의 참가한 워크스페이스 목록 조회 요청 API
 // /api/workspaces?userId=<userId> 요청을 workspaceController의 getWorkspaces 컨트롤러로 전달

@@ -39,6 +39,61 @@ exports.createWorkspace = async ({ userId, name, summary_period, auto_task_perio
     return workspace;
 };
 
+
+// 워크스페이스 수정 비즈니스 로직
+exports.updateWorkspace = async ({ workspaceId, userId, name, summary_period, auto_task_period }) => {
+    // 1. 워크스페이스 존재 확인
+    const workspace = await workspaceModel.findWorkspaceById(workspaceId);
+
+    if (!workspace) {
+        const error = new Error('해당 워크스페이스를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. 요청한 유저가 해당 워크스페이스 멤버인지 확인
+    const member = await workspaceModel.findWorkspaceMember({
+        workspaceId,
+        userId,
+    });
+
+    if (!member) {
+        const error = new Error('해당 워크스페이스에 참여한 사용자가 아닙니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 3. LEADER 권한 확인
+    if (member.role !== 'LEADER') {
+        const error = new Error('워크스페이스를 수정할 권한이 없습니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 4. 워크스페이스 이름 공백 제거
+    const trimmedName = name.trim();
+
+    if (trimmedName === '') {
+        const error = new Error('워크스페이스 이름을 입력해주세요.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // 5. 워크스페이스 수정
+    await workspaceModel.updateWorkspace({
+        workspaceId,
+        name: trimmedName,
+        summary_period,
+        auto_task_period,
+    });
+
+    // 6. controller로 반환
+    return {
+        workspaceId: Number(workspaceId),
+        name: trimmedName,
+    };
+};
+
 // 유저가 참가한 워크스페이스 목록 조회 비즈니스 로직
 exports.getWorkspaces = async (userId) => {
     // userId가 존재하는지 확인

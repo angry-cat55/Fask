@@ -37,6 +37,54 @@ exports.addWorkspaceMember = async ({ workspaceId, userId, role }) => {
 
 // workspaceId로 워크스페이스 조회
 exports.findWorkspaceById = async (workspaceId) => {
+    const sql = `
+        SELECT *
+        FROM workspaces
+        WHERE workspace_id = ?
+    `;
+
+    const [rows] = await pool.query(sql, [workspaceId]);
+
+    return rows[0] || null;
+};
+
+// workspaceId와 userId로 워크스페이스 멤버 조회
+exports.findWorkspaceMember = async ({ workspaceId, userId }) => {
+    const sql = `
+        SELECT *
+        FROM workspace_members
+        WHERE workspace_id = ?
+        AND user_id = ?
+    `;
+
+    const [rows] = await pool.query(sql, [
+        workspaceId,
+        userId,
+    ]);
+
+    return rows[0] || null;
+};
+
+// 워크스페이스 수정
+exports.updateWorkspace = async ({ workspaceId, name, summary_period, auto_task_period }) => {
+    const sql = `
+        UPDATE workspaces
+        SET name = ?,
+            summary_period = ?,
+            auto_task_period = ?
+        WHERE workspace_id = ?
+    `;
+
+    await pool.query(sql, [
+        name,
+        summary_period,
+        auto_task_period,
+        workspaceId,
+    ]);
+};
+
+// workspaceId로 워크스페이스 조회
+exports.findWorkspaceById = async (workspaceId) => {
     // SQL 쿼리: workspaces 테이블에서 workspace_id에 해당하는 워크스페이스 정보 조회
     const sql = 'SELECT * FROM workspaces WHERE workspace_id = ?';
 
