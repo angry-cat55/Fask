@@ -175,3 +175,83 @@ exports.deleteWorkspace = async (workspaceId, userId) => {
         statusCode: 200,
     };
 };
+
+// 워크스페이스 멤버 초대 비즈니스 로직
+exports.inviteMember = async ({ workspaceId, userId, invitedLoginId }) => {
+    // 1. 워크스페이스 존재 확인
+    const workspace = await workspaceModel.findWorkspaceById(workspaceId);
+
+    if (!workspace) {
+        const error = new Error('해당 워크스페이스를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. 초대 요청자가 워크스페이스 멤버인지 확인
+    const requesterMember = await workspaceModel.findWorkspaceMember({
+        workspaceId,
+        userId,
+    });
+
+    if (!requesterMember) {
+        const error = new Error('해당 워크스페이스에 참여한 사용자가 아닙니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 3. LEADER 권한 확인
+    if (requesterMember.role !== 'LEADER') {
+        const error = new Error('멤버를 초대할 권한이 없습니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 4. 초대받을 유저 조회
+    const invitedUser = await userModel.findUserByLoginId(invitedLoginId.trim());
+
+    if (!invitedUser) {
+        const error = new Error('초대할 사용자를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    const invitedUserId = invitedUser.user_id;
+
+    // 5. 자기 자신 초대 방지
+    if (Number(userId) === Number(invitedUserId)) {
+        const error = new Error('자기 자신은 초대할 수 없습니다.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // 6. 이미 워크스페이스 멤버인지 확인
+    const alreadyMember = await workspaceModel.findWorkspaceMember({
+        workspaceId,
+        userId: invitedUserId,
+    });
+
+    if (alreadyMember) {
+        const error = new Error('이미 워크스페이스에 참여 중인 사용자입니다.');
+        error.statusCode = 409;
+        throw error;
+    }
+
+    // 7. 이미 초대가 존재하는지 확인
+    const existingInvitation = await workspaceModel.findInvitation({
+        workspaceId,
+        userId: invitedUserId,
+    });
+
+    if (existingInvitation && existingInvitation.status === 'PENDING') {
+        const error = new Error('이미 초대 요청이 대기 중입니다.');
+        error.statusCode = 409;
+        throw error;
+    }
+
+    // 8. 초대 생성
+    await workspaceModel.createInvitation({
+        workspaceId,
+        userId: invitedUserId,
+        status: 'PENDING',
+    });
+};

@@ -157,3 +157,37 @@ exports.deleteWorkspace = async (req, res) => {
         });
     }
 }
+
+// 워크스페이스 멤버 초대 컨트롤러
+exports.inviteMember = async (req, res) => {
+    try {
+        const { workspaceId } = req.params;
+        const { userId, invitedLoginId } = req.body;
+
+        if (!workspaceId || !userId || !invitedLoginId) {
+            return res.status(400).json({
+                success: false,
+                message: '필수 입력값이 누락되었습니다.',
+            });
+        }
+
+        await workspaceService.inviteMember({
+            workspaceId,
+            userId,
+            invitedLoginId,
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: '멤버 초대 성공',
+        });
+
+    } catch (error) {
+        console.error('멤버 초대 오류:', error);
+
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || '서버 오류가 발생했습니다.',
+        });
+    }
+};
