@@ -191,3 +191,33 @@ exports.inviteMember = async (req, res) => {
         });
     }
 };
+
+// 초대 수신함 조회 컨트롤러
+exports.getInvitationInbox = async (req, res) => {
+    try {
+        const { userId } = req.query;
+
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: 'userId가 누락되었습니다.',
+            });
+        }
+
+        const invitations = await workspaceService.getInvitationInbox(userId);
+
+        return res.status(200).json({
+            success: true,
+            message: '초대 수신함 조회 성공',
+            data: invitations,
+        });
+
+    } catch (error) {
+        console.error('초대 수신함 조회 오류:', error);
+
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || '서버 오류가 발생했습니다.',
+        });
+    }
+};
