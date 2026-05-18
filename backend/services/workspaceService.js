@@ -255,3 +255,22 @@ exports.inviteMember = async ({ workspaceId, userId, invitedLoginId }) => {
         status: 'PENDING',
     });
 };
+
+// 초대 수신함 조회 비즈니스 로직
+exports.getInvitationInbox = async (userId) => {
+    // 1. 유저 존재 확인
+    const user = await userModel.findUserById(userId);
+
+    if (!user) {
+        const error = new Error('존재하지 않는 사용자입니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. 해당 유저가 받은 PENDING 초대 목록 조회
+    const invitations = await workspaceModel.findInvitationsByUserId(userId);
+
+    return invitations;
+};
+
+

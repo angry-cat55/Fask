@@ -180,4 +180,30 @@ exports.createInvitation = async ({ workspaceId, userId, status }) => {
         userId,
         status,
     ]);
+};      
+
+// 초대 수신함 조회
+exports.findInvitationsByUserId = async (userId) => {
+    const sql = `
+        SELECT
+            w.workspace_id AS workspaceId,
+            w.name AS workspaceName,
+            u.nickname AS leaderNickname,
+            i.created_at AS invitedAt
+        FROM invitations i
+        JOIN workspaces w
+            ON i.workspace_id = w.workspace_id
+        JOIN workspace_members wm
+            ON w.workspace_id = wm.workspace_id
+            AND wm.role = 'LEADER'
+        JOIN users u
+            ON wm.user_id = u.user_id
+        WHERE i.user_id = ?
+            AND i.status = 'PENDING'
+        ORDER BY i.created_at DESC
+    `;
+
+    const [rows] = await pool.query(sql, [userId]);
+
+    return rows;
 };

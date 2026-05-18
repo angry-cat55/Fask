@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const workspaceController = require('../controllers/workspaceController');
 
+// 초대 수신함 조회
+// GET /api/workspaces/inbox?userId=1
+router.get('/inbox', workspaceController.getInvitationInbox);
 
 //워크스페이스 생성 요청 API
 // /api/workspaces 요청을 workspaceController의 createWorkspace 컨트롤러로 전달
