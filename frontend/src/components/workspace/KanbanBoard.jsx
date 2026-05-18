@@ -3,29 +3,13 @@ import TaskModal from './TaskModal';
 
 const COLUMNS = [
   { id: 'TODO',        title: '할 일',   accent: 'bg-slate-500',  textAccent: 'text-slate-300' },
-  { id: 'IN_PROGRESS', title: '진행 중', accent: 'bg-cyan-500',   textAccent: 'text-cyan-300'  },
-  { id: 'DONE',        title: '완료',    accent: 'bg-green-500',  textAccent: 'text-green-300' },
+  { id: 'IN_PROGRESS', title: '진행 중', accent: 'bg-red-500',   textAccent: 'text-slate-300'  },
+  { id: 'DONE',        title: '완료',    accent: 'bg-green-500',  textAccent: 'text-slate-300' },
 ];
 
 // ── 더미 데이터 (백엔드 API 완성 전 임시) ───────────────────────────────────
 const DUMMY_KANBAN_ID = 1;
-const DUMMY_TASKS = [
-  {
-    taskId: 1, kanbanId: 1, managerId: 1,
-    title: '로고 이미지 수정', content: '더 멋지게 변경',
-    startTime: '2026-05-01', endTime: '2026-05-10', status: 'TODO',
-  },
-  {
-    taskId: 2, kanbanId: 1, managerId: 1,
-    title: '메인 페이지 레이아웃', content: '반응형 레이아웃 구성',
-    startTime: '2026-05-05', endTime: '2026-05-15', status: 'IN_PROGRESS',
-  },
-  {
-    taskId: 3, kanbanId: 1, managerId: 1,
-    title: '로그인 API 연동', content: null,
-    startTime: '2026-05-01', endTime: '2026-05-08', status: 'DONE',
-  },
-];
+const DUMMY_TASKS = [];
 // status 가능 값: 'TODO' | 'IN_PROGRESS' | 'DONE'
 
 let mockTasks = [...DUMMY_TASKS];
