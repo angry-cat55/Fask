@@ -149,3 +149,61 @@ exports.findWorkspacesByUserId = async (userId) => {
     // 조회된 워크스페이스 목록이 있으면 반환하고, 없으면 빈 배열 반환
     return rows && rows.length > 0 ? rows : [];
 }
+
+// 특정 워크스페이스에 해당 유저의 초대가 존재하는지 조회
+exports.findInvitation = async ({ workspaceId, userId }) => {
+    const sql = `
+        SELECT *
+        FROM invitations
+        WHERE workspace_id = ?
+        AND user_id = ?
+    `;
+
+    const [rows] = await pool.query(sql, [
+        workspaceId,
+        userId,
+    ]);
+
+    return rows[0] || null;
+};
+
+// 워크스페이스 초대 생성
+exports.createInvitation = async ({ workspaceId, userId, status }) => {
+    const sql = `
+        INSERT INTO invitations
+        (workspace_id, user_id, status)
+        VALUES (?, ?, ?)
+    `;
+
+    await pool.query(sql, [
+        workspaceId,
+        userId,
+        status,
+    ]);
+};      
+
+// 초대 수신함 조회
+exports.findInvitationsByUserId = async (userId) => {
+    const sql = `
+        SELECT
+            w.workspace_id AS workspaceId,
+            w.name AS workspaceName,
+            u.nickname AS leaderNickname,
+            i.created_at AS invitedAt
+        FROM invitations i
+        JOIN workspaces w
+            ON i.workspace_id = w.workspace_id
+        JOIN workspace_members wm
+            ON w.workspace_id = wm.workspace_id
+            AND wm.role = 'LEADER'
+        JOIN users u
+            ON wm.user_id = u.user_id
+        WHERE i.user_id = ?
+            AND i.status = 'PENDING'
+        ORDER BY i.created_at DESC
+    `;
+
+    const [rows] = await pool.query(sql, [userId]);
+
+    return rows;
+};
