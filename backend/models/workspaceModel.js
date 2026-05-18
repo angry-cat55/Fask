@@ -149,3 +149,35 @@ exports.findWorkspacesByUserId = async (userId) => {
     // 조회된 워크스페이스 목록이 있으면 반환하고, 없으면 빈 배열 반환
     return rows && rows.length > 0 ? rows : [];
 }
+
+// 특정 워크스페이스에 해당 유저의 초대가 존재하는지 조회
+exports.findInvitation = async ({ workspaceId, userId }) => {
+    const sql = `
+        SELECT *
+        FROM invitations
+        WHERE workspace_id = ?
+        AND user_id = ?
+    `;
+
+    const [rows] = await pool.query(sql, [
+        workspaceId,
+        userId,
+    ]);
+
+    return rows[0] || null;
+};
+
+// 워크스페이스 초대 생성
+exports.createInvitation = async ({ workspaceId, userId, status }) => {
+    const sql = `
+        INSERT INTO invitations
+        (workspace_id, user_id, status)
+        VALUES (?, ?, ?)
+    `;
+
+    await pool.query(sql, [
+        workspaceId,
+        userId,
+        status,
+    ]);
+};

@@ -20,4 +20,8 @@ router.get('/', workspaceController.getWorkspaces);
 // /api/workspaces/{workspaceId}?userId=<userId> 요청을 workspaceController의 deleteWorkspace 컨트롤러로 전달
 router.delete('/:workspaceId', workspaceController.deleteWorkspace);
 
+// 워크스페이스 멤버 초대 요청 API
+// /api/workspaces/{workspaceId}/invitations 요청을 workspaceController의 inviteMembers 컨트롤러로 전달
+router.post('/:workspaceId/invitations', workspaceController.inviteMember);
+
 module.exports = router;
