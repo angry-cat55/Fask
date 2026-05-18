@@ -67,7 +67,7 @@ const NAV_GROUPS = [
 ];
 
 // ── Sidebar ──────────────────────────────────────────────────────────────────
-const Sidebar = ({ active, onSelect, nickname, onLogout }) => {
+const Sidebar = ({ openPanels = [], onSelect, nickname, onLogout }) => {
   const [isMembersOpen, setIsMembersOpen] = useState(false);
   const membersButtonRef = useRef(null);
   const membersPanelRef  = useRef(null);
@@ -81,7 +81,7 @@ const Sidebar = ({ active, onSelect, nickname, onLogout }) => {
     if (itemId === 'members') {
       setIsMembersOpen((prev) => {
         const next = !prev;
-        if (next) { onSelect('members'); setInviteTouched(false); }
+        if (next) { setInviteTouched(false); }
         if (!next) { setInviteUserId(''); setInviteTouched(false); }
         return next;
       });
@@ -128,8 +128,7 @@ const Sidebar = ({ active, onSelect, nickname, onLogout }) => {
               </p>
             )}
             {group.items.map((item) => {
-              const isActive    = active === item.id;
-              const highlighted = (item.id === 'members' && isMembersOpen) || isActive;
+              const highlighted = (item.id === 'members' && isMembersOpen) || openPanels.includes(item.id);
               return (
                 <React.Fragment key={item.id}>
                   <button
