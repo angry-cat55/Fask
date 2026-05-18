@@ -202,7 +202,19 @@ const WorkspacePage = ({ user, onLogout }) => {
         );
       }
 
-      return [{ id, phase: 'opening' }, ...prev];
+      if (id === 'inbox') {
+        return [{ id, phase: 'opening' }, ...prev];
+      }
+
+      const inboxIndex = prev.findIndex((panel) => panel.id === 'inbox');
+
+      if (inboxIndex === -1) {
+        return [...prev, { id, phase: 'opening' }];
+      }
+
+      const nextPanels = [...prev];
+      nextPanels.splice(inboxIndex + 1, 0, { id, phase: 'opening' });
+      return nextPanels;
     });
   };
 
