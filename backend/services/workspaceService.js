@@ -1,4 +1,135 @@
 const workspaceModel = require('../models/workspaceModel');
+const userModel = require('../models/userModel');
+
+// 워크스페이스 생성 비즈니스 로직
+exports.createWorkspace = async ({ userId, name, summary_period, auto_task_period }) => {
+    // 1. 유저 존재 확인
+    const user = await userModel.findUserById(userId);
+
+    if (!user) {
+        const error = new Error('존재하지 않는 사용자입니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. 워크스페이스 이름 공백 제거
+    const trimmedName = name.trim();
+
+    if (trimmedName === '') {
+        const error = new Error('워크스페이스 이름을 입력해주세요.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // 3. workspaces 테이블에 워크스페이스 생성
+    const workspace = await workspaceModel.createWorkspace({
+        name: trimmedName,
+        summary_period,
+        auto_task_period,
+    });
+
+    // 4. workspace_members 테이블에 생성자 추가
+    await workspaceModel.addWorkspaceMember({
+        workspaceId: workspace.workspaceId,
+        userId,
+        role: 'LEADER',
+    });
+
+    // 5. controller로 반환
+    return workspace;
+};
+
+
+// 워크스페이스 수정 비즈니스 로직
+exports.updateWorkspace = async ({ workspaceId, userId, name, summary_period, auto_task_period }) => {
+    // 1. 워크스페이스 존재 확인
+    const workspace = await workspaceModel.findWorkspaceById(workspaceId);
+
+    if (!workspace) {
+        const error = new Error('해당 워크스페이스를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. 요청한 유저가 해당 워크스페이스 멤버인지 확인
+    const member = await workspaceModel.findWorkspaceMember({
+        workspaceId,
+        userId,
+    });
+
+    if (!member) {
+        const error = new Error('해당 워크스페이스에 참여한 사용자가 아닙니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 3. LEADER 권한 확인
+    if (member.role !== 'LEADER') {
+        const error = new Error('워크스페이스를 수정할 권한이 없습니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 4. 워크스페이스 이름 공백 제거
+    const trimmedName = name.trim();
+
+    if (trimmedName === '') {
+        const error = new Error('워크스페이스 이름을 입력해주세요.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // 5. 워크스페이스 수정
+    await workspaceModel.updateWorkspace({
+        workspaceId,
+        name: trimmedName,
+        summary_period,
+        auto_task_period,
+    });
+
+    // 6. controller로 반환
+    return {
+        workspaceId: Number(workspaceId),
+        name: trimmedName,
+    };
+};
+
+// 유저가 참가한 워크스페이스 목록 조회 비즈니스 로직
+exports.getWorkspaces = async (userId) => {
+    // userId가 존재하는지 확인
+    const user = await userModel.findUserById(userId);
+
+    // 사용자가 존재하지 않으면 404 Not Found 에러 발생
+    if (!user) {
+        const error = new Error('해당 사용자를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 유저가 참가한 워크스페이스 목록 조회
+    const workspaces = await workspaceModel.findWorkspacesByUserId(userId);
+
+    // workspaces가 null/undefined일 수 있으므로 안전하게 처리
+    if (!workspaces || workspaces.length === 0) {
+        return {
+            isSuccess: true,
+            statusCode: 200,
+            data: {
+                workspaces: [],
+                count: 0,
+            },
+        };
+    }
+
+    return {
+        isSuccess: true,
+        statusCode: 200,
+        data: {
+            workspaces: workspaces,
+            count: workspaces.length,
+        },
+    };
+}
 
 // 워크스페이스 삭제 비즈니스 로직
 exports.deleteWorkspace = async (workspaceId, userId) => {
