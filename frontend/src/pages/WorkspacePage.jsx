@@ -5,31 +5,27 @@ import ChatView from '../components/workspace/ChatView.jsx';
 
 // ── 뷰 컴포넌트 ─────────────────────────────────────────────────────────────
 const fetchInboxMock = () =>
-  new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        success: true,
-        data: [
-          {
-            workspaceId: 1,
-            workspaceName: '팀-알파',
-            ownerNickname: '태호',
-            invitedAt: '2026-05-19T08:26:14.000Z',
-            message: '워크스페이스에 초대합니다',
-          },
-          {
-            workspaceId: 2,
-            workspaceName: '프로젝트-베타',
-            ownerNickname: '수진',
-            invitedAt: '2026-05-18T08:26:14.000Z',
-            message: '함께 해요!',
-          },
-        ],
-      });
-    }, 500);
+  Promise.resolve({
+    success: true,
+    data: [
+      {
+        workspaceId: 1,
+        workspaceName: '팀-알파',
+        ownerNickname: '태호',
+        invitedAt: '2026-05-19T08:26:14.000Z',
+        message: '워크스페이스에 초대합니다',
+      },
+      {
+        workspaceId: 2,
+        workspaceName: '프로젝트-베타',
+        ownerNickname: '수진',
+        invitedAt: '2026-05-18T08:26:14.000Z',
+        message: '함께 해요!',
+      },
+    ],
   });
 
-const MessageItem = ({ item }) => (
+const MessageItem = ({ item, onAccept, onReject }) => (
   <div className="border-b border-white/5 px-4 py-3 last:border-b-0">
     <div className="text-sm font-semibold text-white">{item.workspaceName}</div>
     <div className="mt-1 text-xs text-slate-400">
@@ -39,10 +35,27 @@ const MessageItem = ({ item }) => (
       {new Date(item.invitedAt).toLocaleString()}
     </div>
     <div className="mt-2 text-sm text-slate-300">{item.message}</div>
+
+    <div className="mt-3 flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => onAccept?.(item)}
+        className="rounded bg-emerald-500 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-emerald-400"
+      >
+        수락
+      </button>
+      <button
+        type="button"
+        onClick={() => onReject?.(item)}
+        className="rounded border border-white/10 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-white/5"
+      >
+        거절
+      </button>
+    </div>
   </div>
 );
 
-const MessageList = ({ items }) => {
+const MessageList = ({ items, onAccept, onReject }) => {
   if (!items || items.length === 0) {
     return (
       <div className="p-4 text-sm text-slate-500">수신된 초대가 없습니다.</div>
@@ -52,7 +65,12 @@ const MessageList = ({ items }) => {
   return (
     <div className="divide-y divide-white/5 overflow-auto">
       {items.map((item) => (
-        <MessageItem key={item.workspaceId} item={item} />
+        <MessageItem
+          key={item.workspaceId}
+          item={item}
+          onAccept={onAccept}
+          onReject={onReject}
+        />
       ))}
     </div>
   );
@@ -62,6 +80,10 @@ const InboxView = ({ user }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const removeItem = useCallback((workspaceId) => {
+    setItems((prev) => prev.filter((item) => item.workspaceId !== workspaceId));
+  }, []);
 
   const loadInbox = useCallback(() => {
     setLoading(true);
@@ -113,7 +135,11 @@ const InboxView = ({ user }) => {
             수신함을 불러오지 못했습니다.
           </div>
         ) : (
-          <MessageList items={items} />
+          <MessageList
+            items={items}
+            onAccept={(item) => removeItem(item.workspaceId)}
+            onReject={(item) => removeItem(item.workspaceId)}
+          />
         )}
       </aside>
     </div>
