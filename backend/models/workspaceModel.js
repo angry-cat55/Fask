@@ -207,3 +207,17 @@ exports.findInvitationsByUserId = async (userId) => {
 
     return rows;
 };
+
+// workspace_members에서 특정 멤버 삭제
+exports.deleteWorkspaceMember = async ({ workspaceId, userId }) => {
+    const sql = `
+        DELETE FROM workspace_members
+        WHERE workspace_id = ?
+        AND user_id = ?
+    `;
+
+    await pool.query(sql, [
+        workspaceId,
+        userId,
+    ]);
+};
