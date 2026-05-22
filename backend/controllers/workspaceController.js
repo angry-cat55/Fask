@@ -235,23 +235,16 @@ exports.kickMember = async (req, res) => {
             });
         }
 
-        await workspaceService.kickMember({
+    const result =await workspaceService.kickMember({
             workspaceId,
             requestUserId: userId,
             targetUserId,
         });
 
-        // 명세서에 204 No Content라고 되어 있으므로 응답 body 없이 반환
-        return res.status(204).send();
-
-        // TODO: 명세서에는 success/message 응답 예시가 있지만,
-        // 204 No Content는 원칙적으로 응답 body를 보내지 않음.
-        // success/message를 보내고 싶다면 200 OK로 바꾸는 것이 더 적절함.
-        //
-        // return res.status(200).json({
-        //     success: true,
-        //     message: '멤버 강퇴 성공',
-        // });
+    return res.status(200).json({
+            success: true,
+            message: result.message,
+        });
 
     } catch (error) {
         console.error('멤버 강퇴 오류:', error);

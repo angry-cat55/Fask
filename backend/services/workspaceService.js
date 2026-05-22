@@ -335,8 +335,8 @@ exports.kickMember = async ({ workspaceId, requestUserId, targetUserId }) => {
         userId: targetUserId,
     });
 
-    // TODO: 현재는 workspace_members에서만 삭제함.
-    // 추후 채팅 메시지, 칸반 담당자, 읽음 위치 등과의 정책을 정해야 함.
-    // 예: 강퇴된 사용자의 과거 chat_messages는 유지할지,
-    // kanban_tasks.manager_id가 해당 유저일 때 null 처리할지 등.
+    return {
+        message: '멤버 강퇴 성공',
+    };
+
 };
