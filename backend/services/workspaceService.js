@@ -273,4 +273,70 @@ exports.getInvitationInbox = async (userId) => {
     return invitations;
 };
 
+// 워크스페이스 멤버 강퇴 비즈니스 로직
+exports.kickMember = async ({ workspaceId, requestUserId, targetUserId }) => {
+    // 1. 워크스페이스 존재 확인
+    const workspace = await workspaceModel.findWorkspaceById(workspaceId);
 
+    if (!workspace) {
+        const error = new Error('해당 워크스페이스를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. 강퇴 요청자가 해당 워크스페이스 멤버인지 확인
+    const requestMember = await workspaceModel.findWorkspaceMember({
+        workspaceId,
+        userId: requestUserId,
+    });
+
+    if (!requestMember) {
+        const error = new Error('해당 워크스페이스에 참여한 사용자가 아닙니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 3. 강퇴 요청자가 LEADER인지 확인
+    if (requestMember.role !== 'LEADER') {
+        const error = new Error('멤버를 강퇴할 권한이 없습니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 4. 자기 자신 강퇴 방지
+    if (Number(requestUserId) === Number(targetUserId)) {
+        const error = new Error('자기 자신은 강퇴할 수 없습니다.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // 5. 강퇴 대상자가 해당 워크스페이스 멤버인지 확인
+    const targetMember = await workspaceModel.findWorkspaceMember({
+        workspaceId,
+        userId: targetUserId,
+    });
+
+    if (!targetMember) {
+        const error = new Error('강퇴할 멤버를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 6. LEADER 강퇴 방지
+    if (targetMember.role === 'LEADER') {
+        const error = new Error('LEADER는 강퇴할 수 없습니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 7. workspace_members에서 멤버 삭제
+    await workspaceModel.deleteWorkspaceMember({
+        workspaceId,
+        userId: targetUserId,
+    });
+
+    return {
+        message: '멤버 강퇴 성공',
+    };
+
+};
