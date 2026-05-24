@@ -28,7 +28,7 @@ const renderPanel = (id, user) => {
     case 'inbox':
       return <InboxView />;
     case 'chat':
-      return <ChatView />;
+      return <ChatView userId={user?.userId} workspaceId={user?.workspaceId} nickname={user?.nickname} />;
     case 'kanban':
       return (
         <KanbanBoard userId={user?.userId} workspaceId={user?.workspaceId} />
