@@ -5,6 +5,7 @@ import FindIdPage from './pages/FindIdPage.jsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 import WorkspacePage from './pages/WorkspacePage.jsx';
 import WorkspaceLanding from './pages/WorkspaceLanding.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('login');
@@ -22,7 +23,11 @@ function App() {
   };
 
   if (currentPage === 'workspace-landing') {
-    return <WorkspaceLanding user={user} onLogout={handleLogout} />;
+    return (
+      <ErrorBoundary>
+        <WorkspaceLanding user={user} onLogout={handleLogout} />
+      </ErrorBoundary>
+    );
   }
 
   if (currentPage === 'workspace') {
