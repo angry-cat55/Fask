@@ -187,12 +187,19 @@ const ChatView = ({ userId, workspaceId, nickname }) => {
       </div>
 
       {/* 메시지 목록 */}
-      <div className="flex flex-1 flex-col overflow-y-auto px-4 py-3 gap-0.5">
+      <div
+        className="flex flex-1 flex-col overflow-y-auto px-4 py-3 gap-3
+          [&::-webkit-scrollbar]:w-1
+          [&::-webkit-scrollbar-track]:bg-transparent
+          [&::-webkit-scrollbar-thumb]:rounded-full
+          [&::-webkit-scrollbar-thumb]:bg-white/10
+          hover:[&::-webkit-scrollbar-thumb]:bg-white/20"
+      >
         {hasMore && (
           <button
             onClick={loadMore}
             disabled={loadingMore}
-            className="mx-auto mb-2 rounded-full border border-white/10 px-4 py-1 text-xs text-slate-500 transition hover:text-slate-300 disabled:opacity-50"
+            className="mx-auto mb-1 rounded-full border border-white/10 px-4 py-1 text-xs text-slate-500 transition hover:text-slate-300 disabled:opacity-50"
           >
             {loadingMore ? '불러오는 중...' : '이전 메시지 보기'}
           </button>
@@ -203,20 +210,35 @@ const ChatView = ({ userId, workspaceId, nickname }) => {
             <p className="text-sm text-slate-600">첫 번째 메시지를 보내보세요.</p>
           </div>
         ) : (
-          messages.map((msg) => (
-            <div
-              key={msg.messageId}
-              className="rounded-xl px-3 py-2 hover:bg-white/3 transition-colors"
-            >
-              <div className="flex items-baseline gap-2">
-                <span className="text-sm font-semibold text-white">{msg.nickname}</span>
-                <span className="text-xs text-slate-600">{formatTime(msg.sendAt)}</span>
+          messages.map((msg) => {
+            const isMine = msg.nickname === (nickname ?? '나');
+            return (
+              <div
+                key={msg.messageId}
+                className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
+              >
+                {!isMine && (
+                  <span className="mb-1 ml-1 text-xs font-semibold text-slate-400">
+                    {msg.nickname}
+                  </span>
+                )}
+                <div className={`flex items-end gap-1.5 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
+                  <div
+                    className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
+                      isMine
+                        ? 'rounded-br-sm bg-cyan-600 text-white'
+                        : 'rounded-bl-sm bg-white/10 text-slate-200'
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap wrap-break-word">{msg.content}</p>
+                  </div>
+                  <span className="shrink-0 text-[10px] text-slate-600">
+                    {formatTime(msg.sendAt)}
+                  </span>
+                </div>
               </div>
-              <p className="mt-0.5 text-sm text-slate-300 whitespace-pre-wrap wrap-break-word">
-                {msg.content}
-              </p>
-            </div>
-          ))
+            );
+          })
         )}
         <div ref={bottomRef} />
       </div>
@@ -230,9 +252,14 @@ const ChatView = ({ userId, workspaceId, nickname }) => {
             onInput={handleInput}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="메시지 입력... (Enter 전송 / Shift+Enter 줄바꿈)"
+            placeholder="메시지 입력..."
             rows={1}
-            className="flex-1 resize-none bg-transparent text-sm text-white placeholder-slate-600 outline-none"
+            className="flex-1 resize-none bg-transparent text-sm text-white placeholder-slate-600 outline-none
+              [&::-webkit-scrollbar]:w-1
+              [&::-webkit-scrollbar-track]:bg-transparent
+              [&::-webkit-scrollbar-thumb]:rounded-full
+              [&::-webkit-scrollbar-thumb]:bg-white/10
+              hover:[&::-webkit-scrollbar-thumb]:bg-white/20"
           />
           <button
             onClick={handleSend}
