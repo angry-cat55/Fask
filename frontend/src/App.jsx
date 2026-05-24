@@ -8,16 +8,27 @@ import WorkspaceLanding from './pages/WorkspaceLanding.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('login');
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [currentPage, setCurrentPage] = useState(() =>
+    localStorage.getItem('user') ? 'workspace' : 'login'
+  );
 
   const handleLoginSuccess = (userData) => {
+    localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     setCurrentPage('workspace-landing');
     alert(`${userData.nickname}님 환영합니다!`);
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('user');
     setUser(null);
     setCurrentPage('login');
   };
