@@ -91,7 +91,7 @@ const KanbanBoard = ({ userId, workspaceId }) => {
         setLoading(false);
       }
     })();
-  }, [workspaceId, userId]);
+  }, [workspaceId, userId, api]);
 
   const openAdd  = (colId) => setModal({ colId, card: { status: colId } });
   const openEdit = (colId, card) => setModal({ colId, card });
