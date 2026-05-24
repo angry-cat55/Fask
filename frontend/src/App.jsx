@@ -23,9 +23,18 @@ function App() {
   };
 
   if (currentPage === 'workspace-landing') {
+    const enterWorkspace = (workspaceId) => {
+      setUser((u) => ({ ...u, workspaceId }));
+      setCurrentPage('workspace');
+    };
+
     return (
       <ErrorBoundary>
-        <WorkspaceLanding user={user} onLogout={handleLogout} />
+        <WorkspaceLanding
+          user={user}
+          onLogout={handleLogout}
+          onEnterWorkspace={enterWorkspace}
+        />
       </ErrorBoundary>
     );
   }

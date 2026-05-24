@@ -2,10 +2,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import WorkspaceCreateCard from '../components/workspace/WorkspaceCreateCard.jsx';
 import WorkspaceList from '../components/workspace/WorkspaceList.jsx';
 
-const WorkspaceLanding = ({ user }) => {
+const WorkspaceLanding = ({ user, onEnterWorkspace }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [creating, setCreating] = useState(false);
 
   const loadList = useCallback(() => {
     const userId = user?.userId ?? '';
@@ -43,25 +44,58 @@ const WorkspaceLanding = ({ user }) => {
   }, [loadList]);
 
   const handleCreate = useCallback(
-    (newWorkspace) => {
-      // 임시: 생성은 4단계에서 API 호출로 대체 예정
-      setItems((prev) => [
-        {
-          workspaceId: Date.now(),
+    async (newWorkspace) => {
+      if (!user?.userId) {
+        alert('사용자 정보가 없습니다. 다시 로그인 해주세요.');
+        return;
+      }
+
+      setCreating(true);
+      try {
+        const body = {
+          userId: user.userId,
           name: newWorkspace.name,
-          masterNickname: user?.nickname ?? 'me',
-        },
-        ...prev,
-      ]);
+          summary_period: 1,
+          auto_task_period: 7,
+        };
+
+        const res = await fetch('/api/workspaces', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        const json = await res.json();
+
+        if (!res.ok) {
+          alert(json.message || '워크스페이스 생성에 실패했습니다.');
+          return;
+        }
+
+        // 생성 성공한 워크스페이스 ID로 바로 입장 시도
+        const newId = json?.data?.workspaceId;
+        if (newId && typeof onEnterWorkspace === 'function') {
+          onEnterWorkspace(newId);
+          return;
+        }
+
+        // fallback: 목록 갱신
+        await loadList();
+      } catch (err) {
+        console.error('워크스페이스 생성 오류:', err);
+        alert('워크스페이스 생성 중 오류가 발생했습니다.');
+      } finally {
+        setCreating(false);
+      }
     },
-    [user?.nickname],
+    [user?.userId, loadList],
   );
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-950 text-white">
       <main className="flex flex-1 flex-col overflow-auto divide-y divide-white/5">
         <section className="p-8 flex items-center justify-center">
-          <WorkspaceCreateCard onCreate={handleCreate} />
+          <WorkspaceCreateCard onCreate={handleCreate} loading={creating} />
         </section>
 
         <section className="p-8">

@@ -1,21 +1,28 @@
 import React, { useState } from 'react';
 
-const WorkspaceCreateCard = ({ onCreate }) => {
+const WorkspaceCreateCard = ({
+  onCreate,
+  loading: externalLoading = false,
+}) => {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!name.trim()) return;
-    setLoading(true);
-    // 실제 API는 아직 연결하지 않음; 상위에서 onCreate로 처리하도록 함
-    Promise.resolve()
-      .then(() => {
-        onCreate?.({ name: name.trim() });
-      })
-      .finally(() => {
+    const payload = { name: name.trim() };
+    const result = onCreate?.(payload);
+
+    // if parent returned a promise, await it and show local loading
+    if (result && typeof result.then === 'function') {
+      try {
+        setLoading(true);
+        await result;
+      } finally {
         setLoading(false);
-        setName('');
-      });
+      }
+    }
+
+    setName('');
   };
 
   return (
@@ -31,15 +38,16 @@ const WorkspaceCreateCard = ({ onCreate }) => {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="워크스페이스 이름"
-          className="w-64 rounded-md border border-white/10 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-400 outline-none"
+          disabled={externalLoading}
+          className="w-64 rounded-md border border-white/10 bg-slate-800 px-3 py-2 text-sm text-white placeholder:text-slate-400 outline-none disabled:opacity-60"
         />
 
         <button
           onClick={handleCreate}
-          disabled={loading}
+          disabled={externalLoading || loading}
           className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
         >
-          {loading ? '생성 중...' : '생성'}
+          {externalLoading || loading ? '생성 중...' : '생성'}
         </button>
       </div>
     </div>
