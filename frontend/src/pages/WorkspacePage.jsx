@@ -2,14 +2,9 @@ import React, { useState } from 'react';
 import Sidebar from '../components/workspace/Sidebar.jsx';
 import KanbanBoard from '../components/workspace/KanbanBoard.jsx';
 import ChatView from '../components/workspace/ChatView.jsx';
+import InboxView from '../components/workspace/InboxView.jsx';
 
 // ── 뷰 컴포넌트 ─────────────────────────────────────────────────────────────
-const InboxView = () => (
-  <div className="p-8">
-    <h2 className="text-2xl font-bold text-white">수신함</h2>
-  </div>
-);
-
 const SummaryView = () => (
   <div className="p-8">
     <h2 className="text-2xl font-bold text-white">요약 공간</h2>
