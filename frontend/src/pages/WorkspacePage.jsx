@@ -2,14 +2,9 @@ import React, { useState } from 'react';
 import Sidebar from '../components/workspace/Sidebar.jsx';
 import KanbanBoard from '../components/workspace/KanbanBoard.jsx';
 import ChatView from '../components/workspace/ChatView.jsx';
+import InboxView from '../components/workspace/InboxView.jsx';
 
 // ── 뷰 컴포넌트 ─────────────────────────────────────────────────────────────
-const InboxView = () => (
-  <div className="p-8">
-    <h2 className="text-2xl font-bold text-white">수신함</h2>
-  </div>
-);
-
 const SummaryView = () => (
   <div className="p-8">
     <h2 className="text-2xl font-bold text-white">요약 공간</h2>
@@ -30,13 +25,22 @@ const WorkspaceSettingsView = () => (
 
 const renderPanel = (id, user) => {
   switch (id) {
-    case 'inbox':              return <InboxView />;
-    case 'chat':               return <ChatView />;
-    case 'kanban':             return <KanbanBoard userId={user?.userId} workspaceId={user?.workspaceId} />;
-    case 'summary':            return <SummaryView />;
-    case 'profile':            return <ProfileView />;
-    case 'workspace-settings': return <WorkspaceSettingsView />;
-    default:                   return null;
+    case 'inbox':
+      return <InboxView />;
+    case 'chat':
+      return <ChatView />;
+    case 'kanban':
+      return (
+        <KanbanBoard userId={user?.userId} workspaceId={user?.workspaceId} />
+      );
+    case 'summary':
+      return <SummaryView />;
+    case 'profile':
+      return <ProfileView />;
+    case 'workspace-settings':
+      return <WorkspaceSettingsView />;
+    default:
+      return null;
   }
 };
 
@@ -47,10 +51,11 @@ const WorkspacePage = ({ user, onLogout }) => {
   const [openPanels, setOpenPanels] = useState([]);
 
   const handleSelect = (id) => {
-    setOpenPanels((prev) =>
-      prev.includes(id)
-        ? prev.filter((p) => p !== id)   // 이미 열려 있으면 닫기
-        : [id, ...prev]                   // 새 패널은 맨 왼쪽에 추가
+    setOpenPanels(
+      (prev) =>
+        prev.includes(id)
+          ? prev.filter((p) => p !== id) // 이미 열려 있으면 닫기
+          : [id, ...prev], // 새 패널은 맨 왼쪽에 추가
     );
   };
 
@@ -66,11 +71,16 @@ const WorkspacePage = ({ user, onLogout }) => {
       <main className="flex flex-1 overflow-hidden divide-x divide-white/5">
         {openPanels.length === 0 ? (
           <div className="flex flex-1 items-center justify-center">
-            <p className="text-sm text-slate-600">사이드바에서 메뉴를 선택하세요.</p>
+            <p className="text-sm text-slate-600">
+              사이드바에서 메뉴를 선택하세요.
+            </p>
           </div>
         ) : (
           openPanels.map((id) => (
-            <div key={id} className={`flex flex-col overflow-hidden ${id === 'chat' ? 'flex-[1]' : 'flex-[2]'}`}>
+            <div
+              key={id}
+              className={`flex flex-col overflow-hidden ${id === 'chat' ? 'flex-1' : 'flex-2'}`}
+            >
               {renderPanel(id, user)}
             </div>
           ))
