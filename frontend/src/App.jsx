@@ -4,6 +4,7 @@ import SignupPage from './pages/SignupPage.jsx';
 import FindIdPage from './pages/FindIdPage.jsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 import WorkspacePage from './pages/WorkspacePage.jsx';
+import WorkspaceLanding from './pages/WorkspaceLanding.jsx';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('login');
@@ -11,7 +12,7 @@ function App() {
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
-    setCurrentPage('workspace');
+    setCurrentPage('workspace-landing');
     alert(`${userData.nickname}님 환영합니다!`);
   };
 
@@ -19,6 +20,10 @@ function App() {
     setUser(null);
     setCurrentPage('login');
   };
+
+  if (currentPage === 'workspace-landing') {
+    return <WorkspaceLanding user={user} onLogout={handleLogout} />;
+  }
 
   if (currentPage === 'workspace') {
     return <WorkspacePage user={user} onLogout={handleLogout} />;
