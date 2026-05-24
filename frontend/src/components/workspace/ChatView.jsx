@@ -13,9 +13,9 @@ let nextMockId = 100;
 
 const mockApi = {
   fetchMessages: () => Promise.resolve({ success: true, data: [...mockMessages] }),
-  sendMessage: async (_, __, content) => {
+  sendMessage: async (_, __, content, nick = '나') => {
     const msg = { messageId: nextMockId++, sendAt: new Date().toISOString(), content };
-    mockMessages = [...mockMessages, { ...msg, nickname: '나' }];
+    mockMessages = [...mockMessages, { ...msg, nickname: nick }];
     return { success: true, data: { messageId: msg.messageId, sendAt: msg.sendAt } };
   },
   summarize: () => Promise.resolve({ success: true, data: { summaryContent: '(Mock) 팀원들이 작업 분배에 대해 논의했습니다.' } }),
@@ -103,7 +103,7 @@ const ChatView = ({ userId, workspaceId, nickname }) => {
     try {
       const result = await (workspaceId
         ? api.sendMessage(workspaceId, userId, content)
-        : api.sendMessage(null, null, content));
+        : api.sendMessage(null, null, content, nickname ?? '나'));
       if (result.success) {
         setMessages((prev) => [
           ...prev,
