@@ -110,7 +110,7 @@ const WorkspaceLanding = ({ user, onEnterWorkspace }) => {
               워크스페이스를 불러오지 못했습니다.
             </div>
           ) : (
-            <WorkspaceList items={items} />
+            <WorkspaceList items={items} onEnterWorkspace={onEnterWorkspace} />
           )}
         </section>
       </main>
