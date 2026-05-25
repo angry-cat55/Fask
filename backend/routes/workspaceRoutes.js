@@ -31,4 +31,8 @@ router.post('/:workspaceId/invitations', workspaceController.inviteMember);
 // POST /api/workspaces/:workspaceId/members/:userId
 router.post('/:workspaceId/members/:userId', workspaceController.kickMember);
 
+// 워크스페이스 방장 권한 위임 API
+// PATCH /api/workspaces/:workspaceId/owner
+router.patch('/:workspaceId/owner', workspaceController.transferWorkspaceLeader);
+
 module.exports = router;

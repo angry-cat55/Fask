@@ -5,9 +5,21 @@ const LIMIT = 30;
 
 // ── Mock (workspaceId 없을 때 사용) ──────────────────────────────────────────
 let mockMessages = [
-  { messageId: 1, nickname: '팀원A', sendAt: '2026-05-24T09:00:00Z', content: '안녕하세요!' },
-  { messageId: 2, nickname: '팀원B', sendAt: '2026-05-24T09:01:00Z', content: '오늘 작업 분배 어떻게 할까요?' },
-  { messageId: 3, nickname: '팀원A', sendAt: '2026-05-24T09:02:00Z', content: '일단 칸반 보드에서 할 일 먼저 정하고 얘기해요' },
+  { messageId: 1,  nickname: '팀원A', sendAt: '2026-05-25T00:00:00Z', content: '안녕하세요!' },
+  { messageId: 2,  nickname: '팀원B', sendAt: '2026-05-25T00:01:00Z', content: '오늘 작업 분배 어떻게 할까요?' },
+  { messageId: 3,  nickname: '팀원A', sendAt: '2026-05-25T00:02:00Z', content: '일단 칸반 보드에서 할 일 먼저 정하고 얘기해요' },
+  { messageId: 4,  nickname: '팀원B', sendAt: '2026-05-25T00:05:00Z', content: '좋아요! 저는 API 연동 담당할게요' },
+  { messageId: 5,  nickname: '팀원A', sendAt: '2026-05-25T00:07:00Z', content: '저는 UI 마무리 할게요. 채팅 말풍선 디자인 수정 중이에요' },
+  { messageId: 6,  nickname: '팀원B', sendAt: '2026-05-25T00:10:00Z', content: '오케이~ 완료되면 PR 올려주세요' },
+  { messageId: 7,  nickname: '팀원A', sendAt: '2026-05-25T00:15:00Z', content: '넵! 오늘 중으로 올리겠습니다' },
+  { messageId: 8,  nickname: '팀원B', sendAt: '2026-05-25T00:30:00Z', content: '칸반 드래그 기능도 완료됐나요?' },
+  { messageId: 9,  nickname: '팀원A', sendAt: '2026-05-25T00:32:00Z', content: '네 드래그 앤 드롭 다 됩니다. 테스트 해보시면 됩니다' },
+  { messageId: 10, nickname: '팀원B', sendAt: '2026-05-25T00:35:00Z', content: '확인했어요! 잘 동작하네요 👍' },
+  { messageId: 11, nickname: '팀원A', sendAt: '2026-05-25T01:00:00Z', content: '소켓 연결은 백엔드 준비 되면 바로 붙이면 될 것 같아요' },
+  { messageId: 12, nickname: '팀원B', sendAt: '2026-05-25T01:05:00Z', content: '맞아요 URL만 맞추면 될 것 같아요' },
+  { messageId: 13, nickname: '팀원A', sendAt: '2026-05-25T01:10:00Z', content: '오늘 회의 몇 시예요?' },
+  { messageId: 14, nickname: '팀원B', sendAt: '2026-05-25T01:11:00Z', content: '오후 3시요!' },
+  { messageId: 15, nickname: '팀원A', sendAt: '2026-05-25T01:12:00Z', content: '알겠습니다. 그럼 그 전까지 PR 리뷰 부탁드려요' },
 ];
 let nextMockId = 100;
 
@@ -43,7 +55,7 @@ const realApi = {
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ChatView = ({ userId, workspaceId, nickname }) => {
+const ChatView = ({ userId, workspaceId, nickname, latestSocketMessage, firstUnreadMessageId }) => {
   const api = workspaceId ? realApi : mockApi;
 
   const [messages, setMessages] = useState([]);
@@ -54,6 +66,7 @@ const ChatView = ({ userId, workspaceId, nickname }) => {
   const [sending, setSending] = useState(false);
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
+  const unreadRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -74,8 +87,24 @@ const ChatView = ({ userId, workspaceId, nickname }) => {
   }, [workspaceId, userId, api]);
 
   useEffect(() => {
-    if (!loading) bottomRef.current?.scrollIntoView();
-  }, [loading]);
+    if (!loading) {
+      if (firstUnreadMessageId && unreadRef.current) {
+        unreadRef.current.scrollIntoView({ block: 'center' });
+      } else {
+        bottomRef.current?.scrollIntoView();
+      }
+    }
+  }, [loading, firstUnreadMessageId]);
+
+  // 소켓으로 새 메시지 수신
+  useEffect(() => {
+    if (!latestSocketMessage) return;
+    setMessages((prev) => {
+      if (prev.some((m) => m.messageId === latestSocketMessage.messageId)) return prev;
+      return [...prev, latestSocketMessage];
+    });
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+  }, [latestSocketMessage]);
 
   const loadMore = async () => {
     if (loadingMore || !hasMore || messages.length === 0) return;
@@ -204,11 +233,19 @@ const ChatView = ({ userId, workspaceId, nickname }) => {
           </div>
         ) : (
           messages.map((msg) => (
-            <ChatBubble
-              key={msg.messageId}
-              msg={msg}
-              isMine={msg.nickname === (nickname ?? '나')}
-            />
+            <React.Fragment key={msg.messageId}>
+              {msg.messageId === firstUnreadMessageId && (
+                <div ref={unreadRef} className="flex items-center gap-2 my-1">
+                  <div className="flex-1 h-px bg-cyan-400/30" />
+                  <span className="text-[10px] text-cyan-400 shrink-0">여기서부터 읽지 않은 메시지</span>
+                  <div className="flex-1 h-px bg-cyan-400/30" />
+                </div>
+              )}
+              <ChatBubble
+                msg={msg}
+                isMine={msg.nickname === (nickname ?? '나')}
+              />
+            </React.Fragment>
           ))
         )}
         <div ref={bottomRef} />
