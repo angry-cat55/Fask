@@ -1,15 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/workspace/Sidebar.jsx';
 import KanbanBoard from '../components/workspace/KanbanBoard.jsx';
 import ChatView from '../components/workspace/ChatView.jsx';
+import InboxView from '../components/workspace/InboxView.jsx';
 
 // ── 뷰 컴포넌트 ─────────────────────────────────────────────────────────────
-const InboxView = () => (
-  <div className="p-8">
-    <h2 className="text-2xl font-bold text-white">수신함</h2>
-  </div>
-);
-
 const SummaryView = () => (
   <div className="p-8">
     <h2 className="text-2xl font-bold text-white">요약 공간</h2>
@@ -28,30 +23,101 @@ const WorkspaceSettingsView = () => (
   </div>
 );
 
-const renderPanel = (id, user) => {
+const renderPanel = (id, user, chatProps) => {
   switch (id) {
-    case 'inbox':              return <InboxView />;
-    case 'chat':               return <ChatView />;
-    case 'kanban':             return <KanbanBoard userId={user?.userId} />;
-    case 'summary':            return <SummaryView />;
-    case 'profile':            return <ProfileView />;
-    case 'workspace-settings': return <WorkspaceSettingsView />;
-    default:                   return null;
+    case 'inbox':
+      return <InboxView />;
+    case 'chat':
+      return <ChatView {...chatProps} />;
+    case 'kanban':
+      return (
+        <KanbanBoard userId={user?.userId} workspaceId={user?.workspaceId} />
+      );
+    case 'summary':
+      return <SummaryView />;
+    case 'profile':
+      return <ProfileView />;
+    case 'workspace-settings':
+      return <WorkspaceSettingsView />;
+    default:
+      return null;
   }
 };
 
 // ── WorkspacePage ────────────────────────────────────────────────────────────
 const WorkspacePage = ({ user, onLogout }) => {
-  // 열려 있는 패널 목록 (왼쪽부터 오른쪽 순)
-  // 새 패널은 맨 왼쪽에 삽입, 마지막 패널이 남은 공간을 채움
   const [openPanels, setOpenPanels] = useState([]);
+  const [chatUnread, setChatUnread] = useState(0);
+  const [latestSocketMessage, setLatestSocketMessage] = useState(null);
+  const [firstUnreadMessageId, setFirstUnreadMessageId] = useState(null);
+
+  const socketMessageHandler = useRef(null);
+
+  // 항상 최신 openPanels를 참조하는 핸들러
+  useEffect(() => {
+    socketMessageHandler.current = (msg) => {
+      if (openPanels.includes('chat')) {
+        setLatestSocketMessage(msg);
+      } else {
+        setChatUnread((prev) => prev + 1);
+        setFirstUnreadMessageId((prev) => prev ?? msg.messageId);
+      }
+    };
+  }, [openPanels]);
+
+  // 소켓 연결 (workspaceId가 있을 때만)
+  useEffect(() => {
+    const workspaceId = user?.workspaceId;
+    const userId = user?.userId;
+    if (!workspaceId || !userId) return;
+
+    const ws = new WebSocket(
+      `ws://${location.host}/ws/workspaces/${workspaceId}?userId=${userId}`,
+    );
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        socketMessageHandler.current?.(msg);
+      } catch {
+        console.error('소켓 메시지 파싱 오류');
+      }
+    };
+    ws.onerror = () => console.error('WebSocket 연결 오류');
+
+    return () => ws.close();
+  }, [user?.workspaceId, user?.userId]);
 
   const handleSelect = (id) => {
+    if (id === 'chat') {
+      const isClosing = openPanels.includes('chat');
+      if (isClosing) {
+        setFirstUnreadMessageId(null);
+      } else {
+        setChatUnread(0);
+      }
+    }
     setOpenPanels((prev) =>
-      prev.includes(id)
-        ? prev.filter((p) => p !== id)   // 이미 열려 있으면 닫기
-        : [id, ...prev]                   // 새 패널은 맨 왼쪽에 추가
+      prev.includes(id) ? prev.filter((p) => p !== id) : [id, ...prev],
     );
+  };
+
+  // TODO: 테스트용 - 확인 후 제거
+  const simulateSocketMessage = () => {
+    const msg = {
+      messageId: Date.now(),
+      nickname: '팀원A',
+      sendAt: new Date().toISOString(),
+      content: '소켓 테스트 메시지입니다!',
+    };
+    socketMessageHandler.current?.(msg);
+  };
+
+  const chatProps = {
+    userId: user?.userId,
+    workspaceId: user?.workspaceId,
+    nickname: user?.nickname,
+    latestSocketMessage,
+    firstUnreadMessageId,
   };
 
   return (
@@ -61,17 +127,32 @@ const WorkspacePage = ({ user, onLogout }) => {
         onSelect={handleSelect}
         nickname={user?.nickname}
         onLogout={onLogout}
+        userId={user?.userId}
+        workspaceId={user?.workspaceId}
+        chatUnread={chatUnread}
       />
 
       <main className="flex flex-1 overflow-hidden divide-x divide-white/5">
         {openPanels.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center">
-            <p className="text-sm text-slate-600">사이드바에서 메뉴를 선택하세요.</p>
+          <div className="flex flex-1 flex-col items-center justify-center gap-4">
+            <p className="text-sm text-slate-600">
+              사이드바에서 메뉴를 선택하세요.
+            </p>
+            {/* TODO: 테스트용 버튼 - 확인 후 제거 */}
+            <button
+              onClick={simulateSocketMessage}
+              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-500 hover:text-slate-300 transition"
+            >
+              소켓 메시지 시뮬레이션
+            </button>
           </div>
         ) : (
           openPanels.map((id) => (
-            <div key={id} className={`flex flex-col overflow-hidden ${id === 'chat' ? 'flex-[1]' : 'flex-[2]'}`}>
-              {renderPanel(id, user)}
+            <div
+              key={id}
+              className={`flex flex-col overflow-hidden ${id === 'chat' ? 'flex-1' : 'flex-2'}`}
+            >
+              {renderPanel(id, user, chatProps)}
             </div>
           ))
         )}

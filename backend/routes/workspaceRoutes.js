@@ -28,8 +28,20 @@ router.delete('/:workspaceId', workspaceController.deleteWorkspace);
 // /api/workspaces/{workspaceId}/invitations 요청을 workspaceController의 inviteMembers 컨트롤러로 전달
 router.post('/:workspaceId/invitations', workspaceController.inviteMember);
 
+<<<<<<< HEAD
 // 워크스페이스에서 채팅 메세지 전송 PAI
 // /api/workspaces/{workspaceId}/messages 요청을 chatController의 sendMessage 컨트롤러로 전달
 router.post('/:workspaceId/messages', chatController.sendMessage);
 
 module.exports = router;
+=======
+// 멤버 강퇴 요청 API
+// POST /api/workspaces/:workspaceId/members/:userId
+router.post('/:workspaceId/members/:userId', workspaceController.kickMember);
+
+// 워크스페이스 방장 권한 위임 API
+// PATCH /api/workspaces/:workspaceId/owner
+router.patch('/:workspaceId/owner', workspaceController.transferWorkspaceLeader);
+
+module.exports = router;
+>>>>>>> 707ebe4a6b41fb830ca94ebf1efd05d4b1ad8975

@@ -273,4 +273,139 @@ exports.getInvitationInbox = async (userId) => {
     return invitations;
 };
 
+// 워크스페이스 멤버 강퇴 비즈니스 로직
+exports.kickMember = async ({ workspaceId, requestUserId, targetUserId }) => {
+    // 1. 워크스페이스 존재 확인
+    const workspace = await workspaceModel.findWorkspaceById(workspaceId);
 
+    if (!workspace) {
+        const error = new Error('해당 워크스페이스를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. 강퇴 요청자가 해당 워크스페이스 멤버인지 확인
+    const requestMember = await workspaceModel.findWorkspaceMember({
+        workspaceId,
+        userId: requestUserId,
+    });
+
+    if (!requestMember) {
+        const error = new Error('해당 워크스페이스에 참여한 사용자가 아닙니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 3. 강퇴 요청자가 LEADER인지 확인
+    if (requestMember.role !== 'LEADER') {
+        const error = new Error('멤버를 강퇴할 권한이 없습니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 4. 자기 자신 강퇴 방지
+    if (Number(requestUserId) === Number(targetUserId)) {
+        const error = new Error('자기 자신은 강퇴할 수 없습니다.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // 5. 강퇴 대상자가 해당 워크스페이스 멤버인지 확인
+    const targetMember = await workspaceModel.findWorkspaceMember({
+        workspaceId,
+        userId: targetUserId,
+    });
+
+    if (!targetMember) {
+        const error = new Error('강퇴할 멤버를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 6. LEADER 강퇴 방지
+    if (targetMember.role === 'LEADER') {
+        const error = new Error('LEADER는 강퇴할 수 없습니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 7. workspace_members에서 멤버 삭제
+    await workspaceModel.deleteWorkspaceMember({
+        workspaceId,
+        userId: targetUserId,
+    });
+
+    return {
+        message: '멤버 강퇴 성공',
+    };
+
+};
+
+
+// 워크스페이스 방장 권한 위임 비즈니스 로직
+exports.transferWorkspaceLeader = async ({ workspaceId, currentLeaderId, newLeaderId }) => {
+    // 1. 워크스페이스 존재 확인
+    const workspace = await workspaceModel.findWorkspaceById(workspaceId);
+
+    if (!workspace) {
+        const error = new Error('해당 워크스페이스를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. 현재 요청자가 해당 워크스페이스 멤버인지 확인
+    const currentMember = await workspaceModel.findWorkspaceMember({
+        workspaceId,
+        userId: currentLeaderId,
+    });
+
+    if (!currentMember) {
+        const error = new Error('해당 워크스페이스에 참여한 사용자가 아닙니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 3. 현재 요청자가 LEADER인지 확인
+    if (currentMember.role !== 'LEADER') {
+        const error = new Error('방장 권한을 위임할 권한이 없습니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 4. 자기 자신에게 위임 방지
+    if (Number(currentLeaderId) === Number(newLeaderId)) {
+        const error = new Error('자기 자신에게 방장 권한을 위임할 수 없습니다.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // 5. 새 방장이 될 유저가 해당 워크스페이스 멤버인지 확인
+    const newLeaderMember = await workspaceModel.findWorkspaceMember({
+        workspaceId,
+        userId: newLeaderId,
+    });
+
+    if (!newLeaderMember) {
+        const error = new Error('새 방장으로 지정할 사용자가 워크스페이스 멤버가 아닙니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 6. 이미 LEADER인 경우 방지
+    if (newLeaderMember.role === 'LEADER') {
+        const error = new Error('이미 방장인 사용자입니다.');
+        error.statusCode = 409;
+        throw error;
+    }
+
+    // 7. 방장 권한 위임
+    await workspaceModel.transferWorkspaceLeader({
+        workspaceId,
+        currentLeaderId,
+        newLeaderId,
+    });
+
+    return {
+        message: '방장 권한이 성공적으로 위임되었습니다.',
+    };
+};

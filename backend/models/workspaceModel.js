@@ -206,3 +206,62 @@ exports.getWorkspaceMemberIds = async (workspaceId) => {
 
     return rows.map(row => row.user_id);
 };
+
+// workspace_members에서 특정 멤버 삭제
+exports.deleteWorkspaceMember = async ({ workspaceId, userId }) => {
+    const sql = `
+        DELETE FROM workspace_members
+        WHERE workspace_id = ?
+        AND user_id = ?
+    `;
+
+    await pool.query(sql, [
+        workspaceId,
+        userId,
+    ]);
+};
+
+
+// 워크스페이스 방장 권한 위임
+exports.transferWorkspaceLeader = async ({ workspaceId, currentLeaderId, newLeaderId }) => {
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        // 기존 LEADER를 MEMBER로 변경
+        const demoteSql = `
+            UPDATE workspace_members
+            SET role = 'MEMBER'
+            WHERE workspace_id = ?
+            AND user_id = ?
+        `;
+
+        await connection.query(demoteSql, [
+            workspaceId,
+            currentLeaderId,
+        ]);
+
+        // 새 방장을 LEADER로 변경
+        const promoteSql = `
+            UPDATE workspace_members
+            SET role = 'LEADER'
+            WHERE workspace_id = ?
+            AND user_id = ?
+        `;
+
+        await connection.query(promoteSql, [
+            workspaceId,
+            newLeaderId,
+        ]);
+
+        await connection.commit();
+
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+
+    } finally {
+        connection.release();
+    }
+};
