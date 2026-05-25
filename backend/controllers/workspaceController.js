@@ -255,3 +255,37 @@ exports.kickMember = async (req, res) => {
         });
     }
 };
+
+// 워크스페이스 방장 권한 위임 컨트롤러
+exports.transferWorkspaceLeader = async (req, res) => {
+    try {
+        const { workspaceId } = req.params;
+        const { userId, newOwnerId } = req.body;
+
+        if (!workspaceId || !userId || !newOwnerId) {
+            return res.status(400).json({
+                success: false,
+                message: '필수 입력값이 누락되었습니다.',
+            });
+        }
+
+        const result = await workspaceService.transferWorkspaceLeader({
+            workspaceId,
+            currentLeaderId: userId,
+            newLeaderId: newOwnerId,
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: result.message,
+        });
+
+    } catch (error) {
+        console.error('방장 권한 위임 오류:', error);
+
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || '서버 오류가 발생했습니다.',
+        });
+    }
+};
