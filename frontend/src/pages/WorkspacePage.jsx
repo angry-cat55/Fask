@@ -28,7 +28,13 @@ const renderPanel = (id, user) => {
     case 'inbox':
       return <InboxView />;
     case 'chat':
-      return <ChatView userId={user?.userId} workspaceId={user?.workspaceId} nickname={user?.nickname} />;
+      return (
+        <ChatView
+          userId={user?.userId}
+          workspaceId={user?.workspaceId}
+          nickname={user?.nickname}
+        />
+      );
     case 'kanban':
       return (
         <KanbanBoard userId={user?.userId} workspaceId={user?.workspaceId} />
@@ -66,6 +72,8 @@ const WorkspacePage = ({ user, onLogout }) => {
         onSelect={handleSelect}
         nickname={user?.nickname}
         onLogout={onLogout}
+        userId={user?.userId}
+        workspaceId={user?.workspaceId}
       />
 
       <main className="flex flex-1 overflow-hidden divide-x divide-white/5">
