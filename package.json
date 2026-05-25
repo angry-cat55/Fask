@@ -1,0 +1,10 @@
+{
+  "name": "fask-root",
+  "private": true,
+  "scripts": {
+    "test": "node backend/tests/socket-room.test.js"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.3"
+  }
+}
