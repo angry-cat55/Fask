@@ -110,6 +110,7 @@ const Sidebar = ({
   onLogout,
   userId,
   workspaceId,
+  chatUnread = 0,
 }) => {
   const [isMembersOpen, setIsMembersOpen] = useState(false);
   const membersButtonRef = useRef(null);
@@ -228,6 +229,11 @@ const Sidebar = ({
                       {item.icon}
                     </span>
                     {item.label}
+                    {item.id === 'chat' && chatUnread > 0 && (
+                      <span className="ml-auto rounded-full bg-cyan-500 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                        {chatUnread > 99 ? '99+' : chatUnread}
+                      </span>
+                    )}
                   </button>
 
                   {item.id === 'members' && isMembersOpen && (
