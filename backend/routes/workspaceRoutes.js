@@ -40,4 +40,14 @@ router.post('/:workspaceId/members/:userId', workspaceController.kickMember);
 // PATCH /api/workspaces/:workspaceId/owner
 router.patch('/:workspaceId/owner', workspaceController.transferWorkspaceLeader);
 
+// 워크스페이스 내의 채팅 내역 조회 API
+// GET /api/workspaces/:workspaceId/messages?userId=<userId>&cursor=<cursor>&limit=<limit>&direction=<direction>
+/*
+ * cursor: 불러올 메세지들의 기준이 되는 메세지 ID
+ * - 워크스페이스에 입장할 때는 null (마지막으로 읽은 메세지 ID를 기준으로 하기 때문에)
+ * limit: 한번에 불러올 메세지 수 (기본값: 30)
+ * direction: 불러올 메세지의 방향 (newer: cursor 이후의 메세지, older: cursor 이전의 메세지, 기본값: newer)
+ */
+router.get('/:workspaceId/messages', chatController.getChatMessages);
+
 module.exports = router;
