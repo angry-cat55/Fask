@@ -3,13 +3,7 @@ import Sidebar from '../components/workspace/Sidebar.jsx';
 import KanbanBoard from '../components/workspace/KanbanBoard.jsx';
 import ChatView from '../components/workspace/ChatView.jsx';
 import InboxView from '../components/workspace/InboxView.jsx';
-
-// ── 뷰 컴포넌트 ─────────────────────────────────────────────────────────────
-const SummaryView = () => (
-  <div className="p-8">
-    <h2 className="text-2xl font-bold text-white">요약 공간</h2>
-  </div>
-);
+import SummaryView from '../components/workspace/SummaryView.jsx';
 
 const ProfileView = () => (
   <div className="p-8">
@@ -23,7 +17,7 @@ const WorkspaceSettingsView = () => (
   </div>
 );
 
-const renderPanel = (id, user, chatProps) => {
+const renderPanel = (id, user, chatProps, summaries) => {
   switch (id) {
     case 'inbox':
       return <InboxView />;
@@ -32,7 +26,7 @@ const renderPanel = (id, user, chatProps) => {
     case 'kanban':
       return <KanbanBoard userId={user?.userId} workspaceId={user?.workspaceId} />;
     case 'summary':
-      return <SummaryView />;
+      return <SummaryView summaries={summaries} />;
     case 'profile':
       return <ProfileView />;
     case 'workspace-settings':
@@ -48,6 +42,7 @@ const WorkspacePage = ({ user, onLogout }) => {
   const [chatUnread, setChatUnread] = useState(0);
   const [latestSocketMessage, setLatestSocketMessage] = useState(null);
   const [firstUnreadMessageId, setFirstUnreadMessageId] = useState(null);
+  const [summaries, setSummaries] = useState([]);
 
   const socketMessageHandler = useRef(null);
 
@@ -112,12 +107,17 @@ const WorkspacePage = ({ user, onLogout }) => {
     socketMessageHandler.current?.(msg);
   };
 
+  const handleSummaryCreated = (summary) => {
+    setSummaries((prev) => [...prev, summary]);
+  };
+
   const chatProps = {
     userId: user?.userId,
     workspaceId: user?.workspaceId,
     nickname: user?.nickname,
     latestSocketMessage,
     firstUnreadMessageId,
+    onSummaryCreated: handleSummaryCreated,
   };
 
   return (
@@ -148,7 +148,7 @@ const WorkspacePage = ({ user, onLogout }) => {
               key={id}
               className={`flex flex-col overflow-hidden ${id === 'chat' ? 'flex-1' : 'flex-2'}`}
             >
-              {renderPanel(id, user, chatProps)}
+              {renderPanel(id, user, chatProps, summaries)}
             </div>
           ))
         )}

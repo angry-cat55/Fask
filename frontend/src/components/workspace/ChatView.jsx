@@ -30,7 +30,16 @@ const mockApi = {
     mockMessages = [...mockMessages, { ...msg, nickname: nick }];
     return { success: true, data: { messageId: msg.messageId, sendAt: msg.sendAt } };
   },
-  summarize: () => Promise.resolve({ success: true, data: { summaryContent: '(Mock) 팀원들이 작업 분배에 대해 논의했습니다.' } }),
+  summarize: () => Promise.resolve({
+    success: true,
+    data: {
+      summaryId: Date.now(),
+      summaryContent: '(Mock) 팀원들이 오늘 작업 분배, 칸반 드래그 구현, 회의 일정에 대해 논의했습니다.',
+      summaryStartAt: '2026-05-25T00:00:00Z',
+      summaryEndAt: '2026-05-25T01:12:00Z',
+      createdAt: new Date().toISOString(),
+    },
+  }),
 };
 
 const realApi = {
@@ -55,7 +64,7 @@ const realApi = {
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ChatView = ({ userId, workspaceId, nickname, latestSocketMessage, firstUnreadMessageId }) => {
+const ChatView = ({ userId, workspaceId, nickname, latestSocketMessage, firstUnreadMessageId, onSummaryCreated }) => {
   const api = workspaceId ? realApi : mockApi;
 
   const [messages, setMessages] = useState([]);
@@ -175,7 +184,7 @@ const ChatView = ({ userId, workspaceId, nickname, latestSocketMessage, firstUnr
         ? api.summarize(workspaceId, userId)
         : api.summarize());
       if (result.success) {
-        alert(`요약이 생성되었습니다.\n\n${result.data.summaryContent}`);
+        onSummaryCreated?.(result.data);
       } else {
         alert(result.message || '요약 생성에 실패했습니다.');
       }
