@@ -207,6 +207,22 @@ exports.getWorkspaceMemberIds = async (workspaceId) => {
     return rows.map(row => row.user_id);
 };
 
+// 초대 상태 변경
+exports.updateInvitationStatus = async ({ workspaceId, userId, status }) => {
+    const sql = `
+        UPDATE invitations
+        SET status = ?
+        WHERE workspace_id = ?
+        AND user_id = ?
+    `;
+
+    await pool.query(sql, [
+        status,
+        workspaceId,
+        userId,
+    ]);
+};
+
 // workspace_members에서 특정 멤버 삭제
 exports.deleteWorkspaceMember = async ({ workspaceId, userId }) => {
     const sql = `
