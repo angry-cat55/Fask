@@ -12,6 +12,8 @@ const PORT = process.env.PORT || 4000;
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const workspaceRoutes = require('./routes/workspaceRoutes');
+const kanbanRoutes = require('./routes/kanbanRoutes');
+
 
 app.use(cors());
 app.use(express.json());
@@ -27,7 +29,7 @@ app.set('io', io);
 app.use('/api/auth', authRoutes); // /api/auth 경로로 들어오는 요청은 authRoutes에서 처리
 app.use('/api/users', userRoutes); // /api/users 경로로 들어오는 요청은 userRoutes에서 처리
 app.use('/api/workspaces', workspaceRoutes); // /api/workspaces 경로로 들어오는 요청은 workspaceRoutes에서 처리
-
+app.use('/api/workspaces', kanbanRoutes); // /api/workspaces 경로로 들어오는 요청 중 kanbanRoutes에서 처리할 수 있는 요청은 kanbanRoutes에서 처리
 server.listen(PORT, () => {
     console.log(`Backend server running on port ${PORT}`);
 });
