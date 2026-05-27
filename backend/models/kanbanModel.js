@@ -30,7 +30,15 @@ exports.createKanban = async (workspaceId) => {
 };
 
 // 태스크 수동 생성
-exports.createManualTask = async ({ kanbanId, managerId }) => {
+exports.createManualTask = async ({
+    kanbanId,
+    managerId,
+    title,
+    content,
+    startTime,
+    endTime,
+    status,
+}) => {
     const sql = `
         INSERT INTO kanban_tasks
         (
@@ -42,14 +50,21 @@ exports.createManualTask = async ({ kanbanId, managerId }) => {
             end_time,
             status
         )
-        VALUES (?, ?, ?, ?, NOW(), NOW(), ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
-    await pool.query(sql, [
+    const [result] = await pool.query(sql, [
         kanbanId,
         managerId,
-        '수동 생성 태스크',
-        '수동으로 생성된 태스크입니다.',
-        'TODO',
+        title,
+        content,
+        startTime,
+        endTime,
+        status,
     ]);
+
+    return {
+        taskId: result.insertId,
+        title,
+    };
 };
