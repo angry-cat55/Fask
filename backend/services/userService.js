@@ -105,3 +105,37 @@ exports.resetPassword = async ({ loginId, newPassword }) => {
         statusCode: 200,
     }
 }
+
+// 계정 탈퇴 비즈니스 로직
+exports.deleteAccount = async (userId) => {
+    // 사용자 ID로 사용자 조회
+    const user = await userModel.findUserById(userId);
+
+    // 사용자가 존재하지 않으면, 404 Not Found 에러 발생
+    if (!user) {
+        return {
+            isSuccess: false,
+            message: '해당 유저를 찾을 수 없습니다.',
+            statusCode: 404,
+        }
+    }
+
+    // 사용자가 참여한 워크스페이스의 리더인지 확인 (삭제 전 리더 권한 양도 필요)
+    const isLeader = await userModel.isUserWorkspaceLeader(userId);
+    if (isLeader) {
+        return {
+            isSuccess: false,
+            message: '워크스페이스의 리더는 계정을 탈퇴할 수 없습니다. 리더 권한을 다른 멤버에게 양도한 후 다시 시도해주세요.',
+            statusCode: 400,
+        }
+    }
+
+    // 계정 탈퇴 
+    await userModel.deleteUserById(userId);
+
+    return {
+        isSuccess: true,
+        message: '계정이 성공적으로 탈퇴되었습니다.',
+        statusCode: 200,
+    }
+}
