@@ -152,6 +152,7 @@ const ChatView = ({
   nickname,
   latestSocketMessage,
   firstUnreadMessageId,
+  onSummaryCreated,
 }) => {
   const api = workspaceId ? realApi : mockApi;
 
@@ -307,7 +308,7 @@ const ChatView = ({
         ? api.summarize(workspaceId, userId)
         : api.summarize());
       if (result.success) {
-        alert(`요약이 생성되었습니다.\n\n${result.data.summaryContent}`);
+        onSummaryCreated?.(result.data);
       } else {
         alert(result.message || '요약 생성에 실패했습니다.');
       }
