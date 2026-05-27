@@ -24,7 +24,9 @@ const renderPanel = (id, user, chatProps, summaries) => {
     case 'chat':
       return <ChatView {...chatProps} />;
     case 'kanban':
-      return <KanbanBoard userId={user?.userId} workspaceId={user?.workspaceId} />;
+      return (
+        <KanbanBoard userId={user?.userId} workspaceId={user?.workspaceId} />
+      );
     case 'summary':
       return <SummaryView summaries={summaries} />;
     case 'profile':
@@ -65,7 +67,7 @@ const WorkspacePage = ({ user, onLogout }) => {
     if (!workspaceId || !userId) return;
 
     const ws = new WebSocket(
-      `ws://${location.host}/ws/workspaces/${workspaceId}?userId=${userId}`
+      `ws://${location.host}/ws/workspaces/${workspaceId}?userId=${userId}`,
     );
     ws.onmessage = (e) => {
       try {
@@ -90,9 +92,7 @@ const WorkspacePage = ({ user, onLogout }) => {
       }
     }
     setOpenPanels((prev) =>
-      prev.includes(id)
-        ? prev.filter((p) => p !== id)
-        : [id, ...prev],
+      prev.includes(id) ? prev.filter((p) => p !== id) : [id, ...prev],
     );
   };
 
@@ -127,13 +127,17 @@ const WorkspacePage = ({ user, onLogout }) => {
         onSelect={handleSelect}
         nickname={user?.nickname}
         onLogout={onLogout}
+        userId={user?.userId}
+        workspaceId={user?.workspaceId}
         chatUnread={chatUnread}
       />
 
       <main className="flex flex-1 overflow-hidden divide-x divide-white/5">
         {openPanels.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4">
-            <p className="text-sm text-slate-600">사이드바에서 메뉴를 선택하세요.</p>
+            <p className="text-sm text-slate-600">
+              사이드바에서 메뉴를 선택하세요.
+            </p>
             {/* TODO: 테스트용 버튼 - 확인 후 제거 */}
             <button
               onClick={simulateSocketMessage}

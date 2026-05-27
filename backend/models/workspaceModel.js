@@ -35,19 +35,6 @@ exports.addWorkspaceMember = async ({ workspaceId, userId, role }) => {
     ]);
 };
 
-// workspaceId로 워크스페이스 조회
-exports.findWorkspaceById = async (workspaceId) => {
-    const sql = `
-        SELECT *
-        FROM workspaces
-        WHERE workspace_id = ?
-    `;
-
-    const [rows] = await pool.query(sql, [workspaceId]);
-
-    return rows[0] || null;
-};
-
 // workspaceId와 userId로 워크스페이스 멤버 조회
 exports.findWorkspaceMember = async ({ workspaceId, userId }) => {
     const sql = `
@@ -206,6 +193,18 @@ exports.findInvitationsByUserId = async (userId) => {
     const [rows] = await pool.query(sql, [userId]);
 
     return rows;
+};
+
+// 워크스페이스 멤버 ID 목록 조회
+exports.getWorkspaceMemberIds = async (workspaceId) => {
+    const sql = `
+        SELECT user_id
+        FROM workspace_members
+        WHERE workspace_id = ?
+    `; 
+    const [rows] = await pool.query(sql, [workspaceId]);
+
+    return rows.map(row => row.user_id);
 };
 
 // workspace_members에서 특정 멤버 삭제
