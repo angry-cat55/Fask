@@ -4,12 +4,7 @@ import KanbanBoard from '../components/workspace/KanbanBoard.jsx';
 import ChatView from '../components/workspace/ChatView.jsx';
 import InboxView from '../components/workspace/InboxView.jsx';
 import SummaryView from '../components/workspace/SummaryView.jsx';
-
-const ProfileView = () => (
-  <div className="p-8">
-    <h2 className="text-2xl font-bold text-white">프로필</h2>
-  </div>
-);
+import ProfileView from '../components/workspace/ProfileView.jsx';
 
 const WorkspaceSettingsView = () => (
   <div className="p-8">
@@ -31,7 +26,7 @@ const renderPanel = (id, user, chatProps, summaries) => {
 };
 
 // ── WorkspacePage ────────────────────────────────────────────────────────────
-const WorkspacePage = ({ user, onLogout }) => {
+const WorkspacePage = ({ user, onLogout, onUserUpdate }) => {
   const [openPanels, setOpenPanels] = useState([]);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
   const [exclusiveView, setExclusiveView] = useState(null);
@@ -170,7 +165,7 @@ const WorkspacePage = ({ user, onLogout }) => {
         {/* 메인 작업 화면 렌더링 영역 */}
         {exclusiveView ? (
           <div className="flex-1 overflow-hidden bg-slate-950">
-            {exclusiveView === 'profile' && <ProfileView />}
+            {exclusiveView === 'profile' && <ProfileView user={user} onLogout={onLogout} onUserUpdate={onUserUpdate} />}
             {exclusiveView === 'workspace-settings' && <WorkspaceSettingsView />}
           </div>
         ) : openPanels.length === 0 ? (
