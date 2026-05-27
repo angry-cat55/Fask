@@ -62,3 +62,24 @@ exports.findUserById = async (userId) => {
     // 조회된 사용자 정보가 있으면 첫 번째 행을 반환하고, 없으면 null 반환
     return rows[0] || null;
 };
+
+// userID로 사용자가 속한 워크스페이스에서 리더인지 확인
+exports.isUserWorkspaceLeader = async (userId) => {
+    // SQL 쿼리: workspace_members 테이블에서 userId에 해당하는 사용자가 리더인지 조회
+    const sql = "SELECT * FROM workspace_members WHERE user_id = ? AND role = 'LEADER'";
+
+    // SQL 쿼리를 실행하여 userId에 해당하는 사용자가 리더인지 확인
+    const [rows] = await pool.query(sql, [userId]);
+
+    // 조회된 결과가 있으면 true, 없으면 false 반환
+    return rows.length > 0;
+};
+
+// 계정 삭제
+exports.deleteUserById = async (userId) => {
+    // SQL 쿼리: users 테이블에서 user_id에 해당하는 사용자 정보 삭제
+    const sql = 'DELETE FROM users WHERE user_id = ?'; 
+
+    // SQL 쿼리를 실행하여 userId에 해당하는 사용자 정보를 삭제
+    await pool.query(sql, [userId]);
+}

@@ -214,3 +214,39 @@ exports.resetPassword = async (req, res) => {
         });
     }
 };
+
+// 계정 탈퇴 컨트롤러
+exports.deleteAccount = async (req, res) => {
+    try {
+        // 클라이언트로부터 전달받은 유저 ID 추출
+        const { userId } = req.body;
+
+        // 유저 ID가 전달되었는지 확인
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: '유저 ID 필드가 누락되었습니다.',
+            });
+        }
+
+        // 전달받은 유저 ID 로그로 출력
+        console.log('계정 탈퇴 요청 유저 ID:', userId);
+
+        // 계정 탈퇴 비즈니스 로직을 수행하여 계정 삭제
+        const result = await userService.deleteAccount(userId);
+
+        // 계정 탈퇴 로직에 따른 응답과 함께 결과 반환
+        return res.status(result.statusCode).json({
+            success: result.isSuccess,
+            message: result.message,
+        });
+
+    } catch (error) { // 계정 탈퇴 과정에서 발생한 에러 처리
+        console.error('계정 탈퇴 오류:', error);
+
+        return res.status(500).json({
+            success: false,
+            message: '서버 내부 오류가 발생하였습니다.',
+        });
+    }
+};

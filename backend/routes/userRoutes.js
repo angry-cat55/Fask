@@ -22,4 +22,8 @@ router.post('/check-password', userController.checkPassword);
 // /api/users/reset-password 요청을 userController의 resetPassword 컨트롤러로 전달
 router.patch('/reset-password', userController.resetPassword);
 
+// 계정 탈퇴 요청 API
+// DELETE /api/users/me 요청을 userController의 deleteAccount 컨트롤러로 전달
+router.delete('/me', userController.deleteAccount);
+
 module.exports = router;
