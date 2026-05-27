@@ -36,6 +36,10 @@ router.post('/:workspaceId/messages', chatController.sendMessage);
 // POST /api/workspaces/:workspaceId/members/:userId
 router.post('/:workspaceId/members/:userId', workspaceController.kickMember);
 
+// 초대 수락/거절 API
+// PATCH /api/workspaces/:workspaceId/invitations/:userId
+router.patch('/:workspaceId/invitations/:userId', workspaceController.respondInvitation);
+
 // 워크스페이스 방장 권한 위임 API
 // PATCH /api/workspaces/:workspaceId/owner
 router.patch('/:workspaceId/owner', workspaceController.transferWorkspaceLeader);

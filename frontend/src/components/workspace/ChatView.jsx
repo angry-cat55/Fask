@@ -5,32 +5,121 @@ const LIMIT = 30;
 
 // ── Mock (workspaceId 없을 때 사용) ──────────────────────────────────────────
 let mockMessages = [
-  { messageId: 1,  nickname: '팀원A', sendAt: '2026-05-25T00:00:00Z', content: '안녕하세요!' },
-  { messageId: 2,  nickname: '팀원B', sendAt: '2026-05-25T00:01:00Z', content: '오늘 작업 분배 어떻게 할까요?' },
-  { messageId: 3,  nickname: '팀원A', sendAt: '2026-05-25T00:02:00Z', content: '일단 칸반 보드에서 할 일 먼저 정하고 얘기해요' },
-  { messageId: 4,  nickname: '팀원B', sendAt: '2026-05-25T00:05:00Z', content: '좋아요! 저는 API 연동 담당할게요' },
-  { messageId: 5,  nickname: '팀원A', sendAt: '2026-05-25T00:07:00Z', content: '저는 UI 마무리 할게요. 채팅 말풍선 디자인 수정 중이에요' },
-  { messageId: 6,  nickname: '팀원B', sendAt: '2026-05-25T00:10:00Z', content: '오케이~ 완료되면 PR 올려주세요' },
-  { messageId: 7,  nickname: '팀원A', sendAt: '2026-05-25T00:15:00Z', content: '넵! 오늘 중으로 올리겠습니다' },
-  { messageId: 8,  nickname: '팀원B', sendAt: '2026-05-25T00:30:00Z', content: '칸반 드래그 기능도 완료됐나요?' },
-  { messageId: 9,  nickname: '팀원A', sendAt: '2026-05-25T00:32:00Z', content: '네 드래그 앤 드롭 다 됩니다. 테스트 해보시면 됩니다' },
-  { messageId: 10, nickname: '팀원B', sendAt: '2026-05-25T00:35:00Z', content: '확인했어요! 잘 동작하네요 👍' },
-  { messageId: 11, nickname: '팀원A', sendAt: '2026-05-25T01:00:00Z', content: '소켓 연결은 백엔드 준비 되면 바로 붙이면 될 것 같아요' },
-  { messageId: 12, nickname: '팀원B', sendAt: '2026-05-25T01:05:00Z', content: '맞아요 URL만 맞추면 될 것 같아요' },
-  { messageId: 13, nickname: '팀원A', sendAt: '2026-05-25T01:10:00Z', content: '오늘 회의 몇 시예요?' },
-  { messageId: 14, nickname: '팀원B', sendAt: '2026-05-25T01:11:00Z', content: '오후 3시요!' },
-  { messageId: 15, nickname: '팀원A', sendAt: '2026-05-25T01:12:00Z', content: '알겠습니다. 그럼 그 전까지 PR 리뷰 부탁드려요' },
+  {
+    messageId: 1,
+    nickname: '팀원A',
+    sendAt: '2026-05-25T00:00:00Z',
+    content: '안녕하세요!',
+  },
+  {
+    messageId: 2,
+    nickname: '팀원B',
+    sendAt: '2026-05-25T00:01:00Z',
+    content: '오늘 작업 분배 어떻게 할까요?',
+  },
+  {
+    messageId: 3,
+    nickname: '팀원A',
+    sendAt: '2026-05-25T00:02:00Z',
+    content: '일단 칸반 보드에서 할 일 먼저 정하고 얘기해요',
+  },
+  {
+    messageId: 4,
+    nickname: '팀원B',
+    sendAt: '2026-05-25T00:05:00Z',
+    content: '좋아요! 저는 API 연동 담당할게요',
+  },
+  {
+    messageId: 5,
+    nickname: '팀원A',
+    sendAt: '2026-05-25T00:07:00Z',
+    content: '저는 UI 마무리 할게요. 채팅 말풍선 디자인 수정 중이에요',
+  },
+  {
+    messageId: 6,
+    nickname: '팀원B',
+    sendAt: '2026-05-25T00:10:00Z',
+    content: '오케이~ 완료되면 PR 올려주세요',
+  },
+  {
+    messageId: 7,
+    nickname: '팀원A',
+    sendAt: '2026-05-25T00:15:00Z',
+    content: '넵! 오늘 중으로 올리겠습니다',
+  },
+  {
+    messageId: 8,
+    nickname: '팀원B',
+    sendAt: '2026-05-25T00:30:00Z',
+    content: '칸반 드래그 기능도 완료됐나요?',
+  },
+  {
+    messageId: 9,
+    nickname: '팀원A',
+    sendAt: '2026-05-25T00:32:00Z',
+    content: '네 드래그 앤 드롭 다 됩니다. 테스트 해보시면 됩니다',
+  },
+  {
+    messageId: 10,
+    nickname: '팀원B',
+    sendAt: '2026-05-25T00:35:00Z',
+    content: '확인했어요! 잘 동작하네요 👍',
+  },
+  {
+    messageId: 11,
+    nickname: '팀원A',
+    sendAt: '2026-05-25T01:00:00Z',
+    content: '소켓 연결은 백엔드 준비 되면 바로 붙이면 될 것 같아요',
+  },
+  {
+    messageId: 12,
+    nickname: '팀원B',
+    sendAt: '2026-05-25T01:05:00Z',
+    content: '맞아요 URL만 맞추면 될 것 같아요',
+  },
+  {
+    messageId: 13,
+    nickname: '팀원A',
+    sendAt: '2026-05-25T01:10:00Z',
+    content: '오늘 회의 몇 시예요?',
+  },
+  {
+    messageId: 14,
+    nickname: '팀원B',
+    sendAt: '2026-05-25T01:11:00Z',
+    content: '오후 3시요!',
+  },
+  {
+    messageId: 15,
+    nickname: '팀원A',
+    sendAt: '2026-05-25T01:12:00Z',
+    content: '알겠습니다. 그럼 그 전까지 PR 리뷰 부탁드려요',
+  },
 ];
 let nextMockId = 100;
 
 const mockApi = {
-  fetchMessages: () => Promise.resolve({ success: true, data: [...mockMessages] }),
+  fetchMessages: () =>
+    Promise.resolve({ success: true, data: [...mockMessages] }),
   sendMessage: async (_, __, content, nick = '나') => {
-    const msg = { messageId: nextMockId++, sendAt: new Date().toISOString(), content };
+    const msg = {
+      messageId: nextMockId++,
+      sendAt: new Date().toISOString(),
+      content,
+    };
     mockMessages = [...mockMessages, { ...msg, nickname: nick }];
-    return { success: true, data: { messageId: msg.messageId, sendAt: msg.sendAt } };
+    return {
+      success: true,
+      data: { messageId: msg.messageId, sendAt: msg.sendAt },
+    };
   },
-  summarize: () => Promise.resolve({ success: true, data: { summaryContent: '(Mock) 팀원들이 작업 분배에 대해 논의했습니다.' } }),
+  summarize: () =>
+    Promise.resolve({
+      success: true,
+      data: {
+        summaryContent: '(Mock) 팀원들이 작업 분배에 대해 논의했습니다.',
+      },
+    }),
 };
 
 const realApi = {
@@ -38,7 +127,9 @@ const realApi = {
     const params = new URLSearchParams({ userId, limit: LIMIT });
     if (cursor != null) params.set('cursor', cursor);
     if (direction != null) params.set('direction', direction);
-    return fetch(`/api/workspaces/${workspaceId}/messages?${params}`).then((r) => r.json());
+    return fetch(`/api/workspaces/${workspaceId}/messages?${params}`).then(
+      (r) => r.json(),
+    );
   },
   sendMessage: (workspaceId, userId, content) =>
     fetch(`/api/workspaces/${workspaceId}/messages`, {
@@ -55,10 +146,18 @@ const realApi = {
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ChatView = ({ userId, workspaceId, nickname, latestSocketMessage, firstUnreadMessageId }) => {
+const ChatView = ({
+  userId,
+  workspaceId,
+  nickname,
+  latestSocketMessage,
+  firstUnreadMessageId,
+  onSummaryCreated,
+}) => {
   const api = workspaceId ? realApi : mockApi;
 
   const [messages, setMessages] = useState([]);
+  const [lastReadMessageId, setLastReadMessageId] = useState(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -67,43 +166,74 @@ const ChatView = ({ userId, workspaceId, nickname, latestSocketMessage, firstUnr
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
   const unreadRef = useRef(null);
+  const unreadBoundaryMessageId =
+    firstUnreadMessageId ??
+    (lastReadMessageId != null ? lastReadMessageId + 1 : null);
 
   useEffect(() => {
+    let isCancelled = false;
+
+    setLoading(true);
+    setMessages([]);
+    setLastReadMessageId(null);
+    setHasMore(false);
+
     (async () => {
       try {
         const result = await (workspaceId
           ? api.fetchMessages(workspaceId, userId)
           : api.fetchMessages());
-        if (result.success && Array.isArray(result.data)) {
-          setMessages(result.data);
-          setHasMore(result.data.length >= LIMIT);
+        const payload = result?.data;
+        const nextMessages = Array.isArray(payload)
+          ? payload
+          : (payload?.messages ?? []);
+        const nextLastReadMessageId = Array.isArray(payload)
+          ? null
+          : (payload?.lastReadMessageId ?? null);
+
+        if (!isCancelled && result.success) {
+          setMessages(nextMessages);
+          setLastReadMessageId(nextLastReadMessageId);
+          setHasMore(nextMessages.length >= LIMIT);
         }
       } catch (err) {
-        console.error('채팅 조회 오류:', err);
+        if (!isCancelled) {
+          console.error('채팅 조회 오류:', err);
+        }
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          setLoading(false);
+        }
       }
     })();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [workspaceId, userId, api]);
 
   useEffect(() => {
     if (!loading) {
-      if (firstUnreadMessageId && unreadRef.current) {
+      if (unreadBoundaryMessageId && unreadRef.current) {
         unreadRef.current.scrollIntoView({ block: 'center' });
       } else {
         bottomRef.current?.scrollIntoView();
       }
     }
-  }, [loading, firstUnreadMessageId]);
+  }, [loading, unreadBoundaryMessageId]);
 
   // 소켓으로 새 메시지 수신
   useEffect(() => {
     if (!latestSocketMessage) return;
     setMessages((prev) => {
-      if (prev.some((m) => m.messageId === latestSocketMessage.messageId)) return prev;
+      if (prev.some((m) => m.messageId === latestSocketMessage.messageId))
+        return prev;
       return [...prev, latestSocketMessage];
     });
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+    setTimeout(
+      () => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }),
+      50,
+    );
   }, [latestSocketMessage]);
 
   const loadMore = async () => {
@@ -145,7 +275,10 @@ const ChatView = ({ userId, workspaceId, nickname, latestSocketMessage, firstUnr
         ]);
         setInput('');
         textareaRef.current.style.height = 'auto';
-        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+        setTimeout(
+          () => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }),
+          50,
+        );
       } else {
         alert(result.message || '메시지 전송에 실패했습니다.');
       }
@@ -175,7 +308,7 @@ const ChatView = ({ userId, workspaceId, nickname, latestSocketMessage, firstUnr
         ? api.summarize(workspaceId, userId)
         : api.summarize());
       if (result.success) {
-        alert(`요약이 생성되었습니다.\n\n${result.data.summaryContent}`);
+        onSummaryCreated?.(result.data);
       } else {
         alert(result.message || '요약 생성에 실패했습니다.');
       }
@@ -198,7 +331,9 @@ const ChatView = ({ userId, workspaceId, nickname, latestSocketMessage, firstUnr
       <div className="flex items-center justify-between border-b border-white/5 px-6 py-4 shrink-0">
         <div>
           <h2 className="text-lg font-bold text-white">채팅</h2>
-          <p className="text-xs text-slate-500">팀원들과 실시간으로 소통하세요.</p>
+          <p className="text-xs text-slate-500">
+            팀원들과 실시간으로 소통하세요.
+          </p>
         </div>
         <button
           onClick={handleSummarize}
@@ -229,15 +364,19 @@ const ChatView = ({ userId, workspaceId, nickname, latestSocketMessage, firstUnr
 
         {messages.length === 0 ? (
           <div className="flex flex-1 items-center justify-center">
-            <p className="text-sm text-slate-600">첫 번째 메시지를 보내보세요.</p>
+            <p className="text-sm text-slate-600">
+              첫 번째 메시지를 보내보세요.
+            </p>
           </div>
         ) : (
           messages.map((msg) => (
             <React.Fragment key={msg.messageId}>
-              {msg.messageId === firstUnreadMessageId && (
+              {msg.messageId === unreadBoundaryMessageId && (
                 <div ref={unreadRef} className="flex items-center gap-2 my-1">
                   <div className="flex-1 h-px bg-cyan-400/30" />
-                  <span className="text-[10px] text-cyan-400 shrink-0">여기서부터 읽지 않은 메시지</span>
+                  <span className="text-[10px] text-cyan-400 shrink-0">
+                    여기서부터 읽지 않은 메시지
+                  </span>
                   <div className="flex-1 h-px bg-cyan-400/30" />
                 </div>
               )}
