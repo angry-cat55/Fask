@@ -165,6 +165,9 @@ const ChatView = ({
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
   const unreadRef = useRef(null);
+  const unreadBoundaryMessageId =
+    firstUnreadMessageId ??
+    (lastReadMessageId != null ? lastReadMessageId + 1 : null);
 
   useEffect(() => {
     let isCancelled = false;
@@ -210,17 +213,13 @@ const ChatView = ({
 
   useEffect(() => {
     if (!loading) {
-      const markerMessageId =
-        firstUnreadMessageId ??
-        (lastReadMessageId != null ? lastReadMessageId + 1 : null);
-
-      if (markerMessageId && unreadRef.current) {
+      if (unreadBoundaryMessageId && unreadRef.current) {
         unreadRef.current.scrollIntoView({ block: 'center' });
       } else {
         bottomRef.current?.scrollIntoView();
       }
     }
-  }, [loading, firstUnreadMessageId, lastReadMessageId]);
+  }, [loading, unreadBoundaryMessageId]);
 
   // 소켓으로 새 메시지 수신
   useEffect(() => {
@@ -371,11 +370,7 @@ const ChatView = ({
         ) : (
           messages.map((msg) => (
             <React.Fragment key={msg.messageId}>
-              {msg.messageId ===
-                (firstUnreadMessageId ??
-                  (lastReadMessageId != null
-                    ? lastReadMessageId + 1
-                    : null)) && (
+              {msg.messageId === unreadBoundaryMessageId && (
                 <div ref={unreadRef} className="flex items-center gap-2 my-1">
                   <div className="flex-1 h-px bg-cyan-400/30" />
                   <span className="text-[10px] text-cyan-400 shrink-0">
