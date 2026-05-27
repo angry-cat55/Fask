@@ -1,6 +1,7 @@
 const { getIO } = require('../config/socket');
 const chatService = require('../services/chatService');
 
+// 채팅 메시지 전송 컨트롤러
 exports.sendMessage = async (req, res) => {
     try {
         const { workspaceId } = req.params;
@@ -59,3 +60,45 @@ exports.sendMessage = async (req, res) => {
         });
     }
 };
+
+// 워크스페이스 내의 채팅 내역 조회 컨트롤러
+exports.getChatMessages = async (req, res) => {
+    try {
+        /*
+         * cursor: 불러올 메세지들의 기준이 되는 메세지 ID
+         * - 워크스페이스에 입장할 때는 null (마지막으로 읽은 메세지 ID를 기준으로 하기 때문에)
+         * limit: 한번에 불러올 메세지 수 (기본값: 30)
+         * direction: 불러올 메세지의 방향 (newer: cursor 이후의 메세지, older: cursor 이전의 메세지, 기본값: newer)
+         */
+        const { workspaceId } = req.params;
+        const { userId, cursor, limit = 20, direction = 'newer' } = req.query;
+        
+        // 필수 필드 확인
+        if (!workspaceId || !userId) {
+            return res.status(400).json({
+                success: false,
+                message: '필수 입력값이 누락되었습니다.',
+            });
+        }
+
+        // 채팅 메시지 조회 서비스 호출
+        const { lastReadMessageId, messages } = await chatService.getChatMessages(workspaceId, userId, cursor, limit, direction);
+
+        // 조회된 메시지 데이터(messageId, nickname, sendAt, content)들과 함께 성공 응답 반환
+        return res.status(200).json({
+            success: true,
+            message: "채팅 메시지 조회 완료",
+            data: {
+                lastReadMessageId: lastReadMessageId, // 유저가 마지막으로 읽은 메세지 ID (cursor가 null인 경우에만 반환, <여기까지 읽으셨습니다.> 표시용)
+                messages: messages
+            }
+        });
+    } catch (error) { // 채팅 메세지 조회 과정에서 발생한 에러 처리
+        console.error('채팅 메세지 조회 오류:', error);
+
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || '서버 오류가 발생했습니다.',
+        });
+    }
+}
