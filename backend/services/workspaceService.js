@@ -1,5 +1,6 @@
 const workspaceModel = require('../models/workspaceModel');
 const userModel = require('../models/userModel');
+const kanbanModel = require('../models/kanbanModel');
 
 // 워크스페이스 생성 비즈니스 로직
 exports.createWorkspace = async ({ userId, name, summary_period, auto_task_period }) => {
@@ -35,7 +36,10 @@ exports.createWorkspace = async ({ userId, name, summary_period, auto_task_perio
         role: 'LEADER',
     });
 
-    // 5. controller로 반환
+    // 5. kanbans 테이블에 워크스페이스 칸반 보드 생성
+    await kanbanModel.createKanban(workspace.workspaceId);
+
+    // 6. controller로 반환
     return workspace;
 };
 
