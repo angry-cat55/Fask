@@ -167,6 +167,13 @@ const ChatView = ({
   const unreadRef = useRef(null);
 
   useEffect(() => {
+    let isCancelled = false;
+
+    setLoading(true);
+    setMessages([]);
+    setLastReadMessageId(null);
+    setHasMore(false);
+
     (async () => {
       try {
         const result = await (workspaceId
@@ -180,17 +187,25 @@ const ChatView = ({
           ? null
           : (payload?.lastReadMessageId ?? null);
 
-        if (result.success) {
+        if (!isCancelled && result.success) {
           setMessages(nextMessages);
           setLastReadMessageId(nextLastReadMessageId);
           setHasMore(nextMessages.length >= LIMIT);
         }
       } catch (err) {
-        console.error('채팅 조회 오류:', err);
+        if (!isCancelled) {
+          console.error('채팅 조회 오류:', err);
+        }
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          setLoading(false);
+        }
       }
     })();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [workspaceId, userId, api]);
 
   useEffect(() => {
