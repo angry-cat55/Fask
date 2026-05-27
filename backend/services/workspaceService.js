@@ -273,6 +273,89 @@ exports.getInvitationInbox = async (userId) => {
     return invitations;
 };
 
+// 초대 수락/거절 비즈니스 로직
+exports.respondInvitation = async ({ workspaceId, userId, status }) => {
+    const normalizedStatus = status.toUpperCase();
+
+    // invitations 테이블 상태값 기준
+    if (!['ACCEPTED', 'REJECTED'].includes(normalizedStatus)) {
+        const error = new Error('status는 ACCEPTED 또는 REJECTED만 가능합니다.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // 1. 워크스페이스 존재 확인
+    const workspace = await workspaceModel.findWorkspaceById(workspaceId);
+
+    if (!workspace) {
+        const error = new Error('해당 워크스페이스를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. 초대 존재 확인
+    const invitation = await workspaceModel.findInvitation({
+        workspaceId,
+        userId,
+    });
+
+    if (!invitation) {
+        const error = new Error('해당 초대를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 3. 이미 처리된 초대인지 확인
+    if (invitation.status !== 'PENDING') {
+        const error = new Error('이미 처리된 초대입니다.');
+        error.statusCode = 409;
+        throw error;
+    }
+
+    // 4. 거절이면 status만 REJECTED로 변경
+    if (normalizedStatus === 'REJECTED') {
+        await workspaceModel.updateInvitationStatus({
+            workspaceId,
+            userId,
+            status: 'REJECTED',
+        });
+
+        return {
+            message: '초대를 거절했습니다.',
+        };
+    }
+
+    // 5. 수락이면 이미 멤버인지 확인
+    const alreadyMember = await workspaceModel.findWorkspaceMember({
+        workspaceId,
+        userId,
+    });
+
+    if (alreadyMember) {
+        const error = new Error('이미 워크스페이스에 참여 중인 사용자입니다.');
+        error.statusCode = 409;
+        throw error;
+    }
+
+    // 6. 초대 상태 ACCEPTED로 변경
+    await workspaceModel.updateInvitationStatus({
+        workspaceId,
+        userId,
+        status: 'ACCEPTED',
+    });
+
+    // 7. workspace_members에 MEMBER로 추가
+    await workspaceModel.addWorkspaceMember({
+        workspaceId,
+        userId,
+        role: 'MEMBER',
+    });
+
+    return {
+        message: '초대를 수락했습니다.',
+    };
+};
+
 // 워크스페이스 멤버 강퇴 비즈니스 로직
 exports.kickMember = async ({ workspaceId, requestUserId, targetUserId }) => {
     // 1. 워크스페이스 존재 확인
