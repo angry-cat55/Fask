@@ -1,27 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import MessageList from './MessageList.jsx';
 
-const fetchInboxMock = () =>
-  Promise.resolve({
-    success: true,
-    data: [
-      {
-        workspaceId: 1,
-        workspaceName: '팀-알파',
-        ownerNickname: '태호',
-        invitedAt: '2026-05-19T08:26:14.000Z',
-        message: '워크스페이스에 초대합니다',
-      },
-      {
-        workspaceId: 2,
-        workspaceName: '프로젝트-베타',
-        ownerNickname: '수진',
-        invitedAt: '2026-05-18T08:26:14.000Z',
-        message: '함께 해요!',
-      },
-    ],
-  });
-
 const InboxView = ({ user }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,38 +10,60 @@ const InboxView = ({ user }) => {
     setItems((prev) => prev.filter((item) => item.workspaceId !== workspaceId));
   }, []);
 
+  const handleAccept = useCallback(async (item) => {
+    try {
+      const res = await fetch(`/api/workspaces/${item.workspaceId}/invitations`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.userId, status: 'ACCEPTED' }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        removeItem(item.workspaceId);
+      } else {
+        alert(result.message || '수락에 실패했습니다.');
+      }
+    } catch {
+      alert('서버 통신 오류가 발생했습니다.');
+    }
+  }, [user, removeItem]);
+
+  const handleReject = useCallback(async (item) => {
+    try {
+      const res = await fetch(`/api/workspaces/${item.workspaceId}/invitations`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.userId, status: 'REJECTED' }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        removeItem(item.workspaceId);
+      } else {
+        alert(result.message || '거절에 실패했습니다.');
+      }
+    } catch {
+      alert('서버 통신 오류가 발생했습니다.');
+    }
+  }, [user, removeItem]);
+
   const loadInbox = useCallback(() => {
     setLoading(true);
     setError(null);
 
-    fetch(
-      `/api/workspaces/inbox?userId=${encodeURIComponent(user?.userId ?? '')}`,
-    )
-      .then((response) =>
-        response.ok
-          ? response.json()
-          : Promise.reject(new Error('fetch failed')),
-      )
+    fetch(`/api/workspaces/inbox?userId=${encodeURIComponent(user?.userId ?? '')}`)
+      .then((res) => res.ok ? res.json() : Promise.reject(new Error('fetch failed')))
       .then((json) => {
         setItems(json?.data ?? []);
         setLoading(false);
       })
-      .catch(() => {
-        fetchInboxMock()
-          .then((response) => {
-            setItems(response.data ?? []);
-            setLoading(false);
-          })
-          .catch((mockError) => {
-            setError(mockError);
-            setLoading(false);
-          });
+      .catch((err) => {
+        setError(err);
+        setLoading(false);
       });
   }, [user?.userId]);
 
   useEffect(() => {
     const initialLoad = setTimeout(() => loadInbox(), 0);
-
     return () => clearTimeout(initialLoad);
   }, [loadInbox]);
 
@@ -83,8 +84,8 @@ const InboxView = ({ user }) => {
         ) : (
           <MessageList
             items={items}
-            onAccept={(item) => removeItem(item.workspaceId)}
-            onReject={(item) => removeItem(item.workspaceId)}
+            onAccept={handleAccept}
+            onReject={handleReject}
           />
         )}
       </aside>
