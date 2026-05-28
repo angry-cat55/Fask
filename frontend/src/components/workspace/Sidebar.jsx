@@ -49,6 +49,16 @@ const MembersIcon = () => (
     <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
   </Ico>
 );
+const MemberListIcon = () => (
+  <Ico>
+    <line x1="8" y1="6" x2="21" y2="6" />
+    <line x1="8" y1="12" x2="21" y2="12" />
+    <line x1="8" y1="18" x2="21" y2="18" />
+    <circle cx="3" cy="6" r="1" />
+    <circle cx="3" cy="12" r="1" />
+    <circle cx="3" cy="18" r="1" />
+  </Ico>
+);
 const ProfileIcon = () => (
   <Ico>
     <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
@@ -87,7 +97,10 @@ const NAV_GROUPS = [
   },
   {
     label: '팀',
-    items: [{ id: 'members', label: '멤버 초대', icon: <MembersIcon /> }],
+    items: [
+      { id: 'members', label: '멤버 초대', icon: <MembersIcon /> },
+      { id: 'member-list', label: '멤버 목록', icon: <MemberListIcon /> },
+    ],
   },
   {
     label: '설정',
@@ -119,7 +132,92 @@ const Sidebar = ({
   const [inviteTouched, setInviteTouched] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
 
+  const [isMemberListOpen, setIsMemberListOpen] = useState(false);
+  const memberListButtonRef = useRef(null);
+  const memberListPanelRef = useRef(null);
+  const [members, setMembers] = useState([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersError, setMembersError] = useState('');
+  // actionTarget: { member, type: 'transfer' | 'kick' } | null
+  const [actionTarget, setActionTarget] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [expandedMemberId, setExpandedMemberId] = useState(null);
+
+  const isLeader =
+    members.find((m) => String(m.userId) === String(userId))?.role === 'LEADER';
+
   const validateInviteId = (value) => /^[a-zA-Z0-9_-]{4,20}$/.test(value);
+
+  const fetchMembers = async () => {
+    setMembersLoading(true);
+    setMembersError('');
+    try {
+      const res = await fetch(
+        `/api/workspaces/${workspaceId}/members?userId=${userId}`,
+      );
+      const result = await res.json();
+      if (result.success) {
+        setMembers(result.data.members);
+      } else {
+        setMembersError(result.message || '멤버 목록을 불러오지 못했습니다.');
+      }
+    } catch {
+      setMembersError('서버 통신 오류가 발생했습니다.');
+    } finally {
+      setMembersLoading(false);
+    }
+  };
+
+  const handleTransfer = async () => {
+    if (actionTarget?.type !== 'transfer') return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/workspaces/${workspaceId}/owner`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, newOwnerId: actionTarget.member.userId }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        alert(result.message || '방장 권한이 위임되었습니다.');
+        setActionTarget(null);
+        fetchMembers();
+      } else {
+        alert(result.message || '방장 권한 위임에 실패했습니다.');
+      }
+    } catch {
+      alert('서버 통신 오류가 발생했습니다.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleKick = async () => {
+    if (actionTarget?.type !== 'kick') return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(
+        `/api/workspaces/${workspaceId}/members/${actionTarget.member.userId}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId }),
+        },
+      );
+      const result = await res.json();
+      if (result.success) {
+        alert(result.message || '멤버를 강퇴했습니다.');
+        setActionTarget(null);
+        fetchMembers();
+      } else {
+        alert(result.message || '강퇴에 실패했습니다.');
+      }
+    } catch {
+      alert('서버 통신 오류가 발생했습니다.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const inviteMember = async ({
     workspaceId: targetWorkspaceId,
@@ -149,41 +247,64 @@ const Sidebar = ({
 
   const handleSelect = (itemId) => {
     if (itemId === 'members') {
+      setIsMemberListOpen(false);
+      setActionTarget(null);
       setIsMembersOpen((prev) => {
         const next = !prev;
-        if (next) {
-          setInviteTouched(false);
-        }
-        if (!next) {
-          setInviteUserId('');
-          setInviteTouched(false);
-        }
+        if (next) setInviteTouched(false);
+        if (!next) { setInviteUserId(''); setInviteTouched(false); }
         return next;
       });
       return;
     }
+    if (itemId === 'member-list') {
+      setIsMembersOpen(false);
+      setInviteUserId('');
+      if (!isMemberListOpen) {
+        fetchMembers();
+      } else {
+        setActionTarget(null);
+      }
+      setIsMemberListOpen((prev) => !prev);
+      return;
+    }
     setIsMembersOpen(false);
+    setIsMemberListOpen(false);
     setInviteUserId('');
+    setActionTarget(null);
     onSelect(itemId);
   };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (!isMembersOpen) return;
-      const panel = membersPanelRef.current;
-      const btn = membersButtonRef.current;
-      if (
-        !(panel && panel.contains(e.target)) &&
-        !(btn && btn.contains(e.target))
-      ) {
-        setIsMembersOpen(false);
-        setInviteUserId('');
-        setInviteTouched(false);
+      if (isMembersOpen) {
+        const panel = membersPanelRef.current;
+        const btn = membersButtonRef.current;
+        if (
+          !(panel && panel.contains(e.target)) &&
+          !(btn && btn.contains(e.target))
+        ) {
+          setIsMembersOpen(false);
+          setInviteUserId('');
+          setInviteTouched(false);
+        }
+      }
+      if (isMemberListOpen) {
+        const panel = memberListPanelRef.current;
+        const btn = memberListButtonRef.current;
+        if (
+          !(panel && panel.contains(e.target)) &&
+          !(btn && btn.contains(e.target))
+        ) {
+          setIsMemberListOpen(false);
+          setActionTarget(null);
+          setExpandedMemberId(null);
+        }
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isMembersOpen]);
+  }, [isMembersOpen, isMemberListOpen]);
 
   return (
     <aside className="flex h-full w-56 shrink-0 flex-col border-r border-white/5 bg-slate-900/60">
@@ -208,11 +329,12 @@ const Sidebar = ({
             {group.items.map((item) => {
               const highlighted =
                 (item.id === 'members' && isMembersOpen) ||
+                (item.id === 'member-list' && isMemberListOpen) ||
                 openPanels.includes(item.id);
               return (
                 <React.Fragment key={item.id}>
                   <button
-                    ref={item.id === 'members' ? membersButtonRef : null}
+                    ref={item.id === 'members' ? membersButtonRef : item.id === 'member-list' ? memberListButtonRef : null}
                     type="button"
                     onClick={() => handleSelect(item.id)}
                     className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition ${
@@ -235,6 +357,149 @@ const Sidebar = ({
                       </span>
                     )}
                   </button>
+
+                  {item.id === 'member-list' && isMemberListOpen && (
+                      <div
+                        ref={memberListPanelRef}
+                        className="mt-2 ml-1 rounded-2xl border border-white/10 bg-slate-950/60 p-3 shadow-lg shadow-black/10"
+                      >
+                        <div className="flex items-center justify-between mb-2.5">
+                          <span className="text-sm font-semibold text-white">멤버 목록</span>
+                          <button
+                            onClick={fetchMembers}
+                            disabled={membersLoading}
+                            className="text-[10px] text-slate-500 hover:text-slate-300 transition disabled:opacity-40"
+                          >
+                            새로고침
+                          </button>
+                        </div>
+
+                        {membersLoading ? (
+                          <p className="py-3 text-center text-xs text-slate-600">불러오는 중...</p>
+                        ) : membersError ? (
+                          <p className="py-2 text-center text-xs text-red-400">{membersError}</p>
+                        ) : (
+                          <div className="flex flex-col gap-1 max-h-52 overflow-y-auto">
+                            {members.map((member) => {
+                              const isSelf = String(member.userId) === String(userId);
+                              const isExpanded = expandedMemberId === member.userId;
+                              const isActive = actionTarget?.member?.userId === member.userId;
+                              const isTransferConfirm = isActive && actionTarget.type === 'transfer';
+                              const isKickConfirm = isActive && actionTarget.type === 'kick';
+                              const clickable = isLeader && !isSelf && member.role !== 'LEADER';
+
+                              return (
+                                <div
+                                  key={member.userId}
+                                  onClick={() => {
+                                    if (!clickable || isActive) return;
+                                    setExpandedMemberId((prev) =>
+                                      prev === member.userId ? null : member.userId
+                                    );
+                                  }}
+                                  className={`rounded-lg bg-slate-800/40 px-2.5 py-2 ${clickable && !isActive ? 'cursor-pointer hover:bg-slate-700/50 transition' : ''}`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-700 text-[10px] font-bold text-slate-300">
+                                      {member.nickname[0].toUpperCase()}
+                                    </div>
+                                    <div className="flex flex-1 flex-col min-w-0">
+                                      <div className="flex items-center gap-1">
+                                        <span className="text-xs font-medium text-white truncate">
+                                          {member.nickname}
+                                        </span>
+                                        {isSelf && (
+                                          <span className="text-[9px] text-slate-600">(나)</span>
+                                        )}
+                                      </div>
+                                      <span className="text-[10px] text-slate-500 truncate">
+                                        @{member.loginId}
+                                      </span>
+                                    </div>
+                                    <span className={`shrink-0 text-[10px] font-semibold ${member.role === 'LEADER' ? 'text-cyan-400' : 'text-slate-600'}`}>
+                                      {member.role === 'LEADER' ? '방장' : '멤버'}
+                                    </span>
+                                  </div>
+
+                                  {isExpanded && !isActive && (
+                                    <div className="mt-2 flex gap-1.5 border-t border-white/5 pt-2">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setExpandedMemberId(null);
+                                          setActionTarget({ member, type: 'transfer' });
+                                        }}
+                                        className="flex-1 rounded border border-white/10 py-1 text-[10px] text-slate-300 hover:bg-white/5 transition"
+                                      >
+                                        방장 위임
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setExpandedMemberId(null);
+                                          setActionTarget({ member, type: 'kick' });
+                                        }}
+                                        className="flex-1 rounded border border-red-500/20 py-1 text-[10px] text-red-400/70 hover:text-red-400 hover:bg-red-500/5 transition"
+                                      >
+                                        강제 퇴장
+                                      </button>
+                                    </div>
+                                  )}
+
+                                  {isTransferConfirm && (
+                                    <div className="mt-2 border-t border-white/5 pt-2">
+                                      <p className="mb-1.5 text-[10px] text-amber-300">
+                                        <span className="font-semibold">{member.nickname}</span>님에게 방장을 위임할까요?
+                                      </p>
+                                      <div className="flex gap-1.5">
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); handleTransfer(); }}
+                                          disabled={actionLoading}
+                                          className="flex-1 rounded bg-amber-500 py-1 text-[10px] font-medium text-white hover:bg-amber-400 disabled:opacity-50 transition"
+                                        >
+                                          {actionLoading ? '처리중...' : '위임'}
+                                        </button>
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); setActionTarget(null); }}
+                                          disabled={actionLoading}
+                                          className="flex-1 rounded border border-white/10 py-1 text-[10px] text-slate-400 hover:text-white transition"
+                                        >
+                                          취소
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {isKickConfirm && (
+                                    <div className="mt-2 border-t border-white/5 pt-2">
+                                      <p className="mb-1.5 text-[10px] text-red-300">
+                                        <span className="font-semibold">{member.nickname}</span>님을 강제 퇴장시킬까요?
+                                      </p>
+                                      <div className="flex gap-1.5">
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); handleKick(); }}
+                                          disabled={actionLoading}
+                                          className="flex-1 rounded bg-red-500 py-1 text-[10px] font-medium text-white hover:bg-red-400 disabled:opacity-50 transition"
+                                        >
+                                          {actionLoading ? '처리중...' : '강퇴'}
+                                        </button>
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); setActionTarget(null); }}
+                                          disabled={actionLoading}
+                                          className="flex-1 rounded border border-white/10 py-1 text-[10px] text-slate-400 hover:text-white transition"
+                                        >
+                                          취소
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                  )}
 
                   {item.id === 'members' && isMembersOpen && (
                     <div
