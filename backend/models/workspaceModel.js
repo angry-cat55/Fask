@@ -262,6 +262,19 @@ exports.deleteWorkspaceMember = async ({ workspaceId, userId }) => {
     ]);
 };
 
+// invitation에서 특정 멤버의 초대 기록 삭제
+exports.deleteInvitation = async ({ workspaceId, userId }) => {
+    const sql = `
+        DELETE FROM invitations
+        WHERE workspace_id = ?
+        AND user_id = ?
+    `;
+
+    await pool.query(sql, [
+        workspaceId,
+        userId,
+    ]);
+};
 
 // 워크스페이스 방장 권한 위임
 exports.transferWorkspaceLeader = async ({ workspaceId, currentLeaderId, newLeaderId }) => {

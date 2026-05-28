@@ -245,11 +245,21 @@ exports.inviteMember = async ({ workspaceId, userId, invitedLoginId }) => {
         workspaceId,
         userId: invitedUserId,
     });
-
+    // 7-1. 이미 PENDING 상태의 초대가 존재하면 에러 반환
     if (existingInvitation && existingInvitation.status === 'PENDING') {
         const error = new Error('이미 초대 요청이 대기 중입니다.');
         error.statusCode = 409;
         throw error;
+    }
+    // 7-2. 이미 REJECTED 상태의 초대가 존재하면 상태를 PENDING으로 업데이트
+    if (existingInvitation && existingInvitation.status === 'REJECTED') {
+        await workspaceModel.updateInvitationStatus({
+            workspaceId,
+            userId: invitedUserId,
+            status: 'PENDING',
+        });
+
+        return;
     }
 
     // 8. 초대 생성
@@ -422,8 +432,14 @@ exports.kickMember = async ({ workspaceId, requestUserId, targetUserId }) => {
         userId: targetUserId,
     });
 
+    // 8. invitation에서 해당 멤버의 초대 기록 삭제 (초대 수락 후 강퇴된 경우를 대비)
+    await workspaceModel.deleteInvitation({
+         workspaceId,
+         userId: targetUserId,
+    });
+
     return {
-        message: '멤버 강퇴 성공',
+        message: '멤버 강퇴가 성공적으로 처리되었습니다.',
     };
 
 };
