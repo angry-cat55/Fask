@@ -496,3 +496,32 @@ exports.transferWorkspaceLeader = async ({ workspaceId, currentLeaderId, newLead
         message: '방장 권한이 성공적으로 위임되었습니다.',
     };
 };
+
+// 워크스페이스 멤버 목록 조회 비즈니스 로직
+exports.getWorkspaceMembers = async ({ workspaceId, userId }) => {
+    // 1. 워크스페이스 존재 확인
+    const workspace = await workspaceModel.findWorkspaceById(workspaceId);
+
+    if (!workspace) {
+        const error = new Error('해당 워크스페이스를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. 요청한 유저가 해당 워크스페이스 멤버인지 확인
+    const requester = await workspaceModel.findWorkspaceMember({
+        workspaceId,
+        userId,
+    });
+
+    if (!requester) {
+        const error = new Error('해당 워크스페이스에 참여한 사용자가 아닙니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 3. 멤버 목록 조회
+    const members = await workspaceModel.findWorkspaceMembers(workspaceId);
+
+    return members;
+};
