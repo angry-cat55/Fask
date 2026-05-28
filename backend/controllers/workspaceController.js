@@ -225,8 +225,8 @@ exports.getInvitationInbox = async (req, res) => {
 // 초대 수락/거절 컨트롤러
 exports.respondInvitation = async (req, res) => {
     try {
-        const { workspaceId, userId } = req.params;
-        const { status } = req.body;
+        const { workspaceId } = req.params;
+        const { userId, status } = req.body;
 
         if (!workspaceId || !userId || !status) {
             return res.status(400).json({
