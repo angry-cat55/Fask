@@ -161,8 +161,7 @@ exports.findWorkspaceMembers = async (workspaceId) => {
             u.user_id AS userId,
             u.login_id AS loginId,
             u.nickname AS nickname,
-            wm.role AS role,
-            wm.last_read_message_id AS lastReadMessageId
+            wm.role AS role
         FROM workspace_members wm
         JOIN users u
             ON wm.user_id = u.user_id
