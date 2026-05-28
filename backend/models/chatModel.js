@@ -75,7 +75,9 @@ exports.getMessagesAroundLastRead = async ({ workspaceId, userId }) => {
     const beforeChron = beforeRows.reverse();
     const combined = [...beforeChron, ...afterRows];
 
-    // lastReadMessageId는 이후 메시지 중 가장 마지막 메시지 ID (없으면 null)
+    // 사용자가 마지막으로 읽은 메시지 ID (<여기까지 읽음> 경계 표시용)
+    // DB상 마지막으로 읽은 메세지 이후의 메시지가 있으면 경계 표시를 위해 `lastRead`를 반환하고,
+    // 이후 메시지가 없으면 `null`을 반환한다.
     const lastReadMessageId = afterRows.length === 0 ? null : lastRead;
 
     return { lastReadMessageId, messages: combined };
