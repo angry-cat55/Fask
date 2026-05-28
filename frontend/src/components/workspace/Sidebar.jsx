@@ -289,22 +289,10 @@ const Sidebar = ({
           setInviteTouched(false);
         }
       }
-      if (isMemberListOpen) {
-        const panel = memberListPanelRef.current;
-        const btn = memberListButtonRef.current;
-        if (
-          !(panel && panel.contains(e.target)) &&
-          !(btn && btn.contains(e.target))
-        ) {
-          setIsMemberListOpen(false);
-          setActionTarget(null);
-          setExpandedMemberId(null);
-        }
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isMembersOpen, isMemberListOpen]);
+  }, [isMembersOpen]);
 
   return (
     <aside className="flex h-full w-56 shrink-0 flex-col border-r border-white/5 bg-slate-900/60">
@@ -318,7 +306,7 @@ const Sidebar = ({
         </div>
       </div>
 
-      <nav className="flex flex-1 flex-col overflow-y-auto px-2 py-3">
+      <nav className="sidebar-scroll flex flex-1 flex-col overflow-y-auto px-2 py-3">
         {NAV_GROUPS.map((group, gi) => (
           <div key={gi} className={gi > 0 ? 'mt-4' : ''}>
             {group.label && (
