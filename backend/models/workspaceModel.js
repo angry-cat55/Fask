@@ -154,6 +154,32 @@ exports.findInvitation = async ({ workspaceId, userId }) => {
     return rows[0] || null;
 };
 
+// 워크스페이스 멤버 목록 조회
+exports.findWorkspaceMembers = async (workspaceId) => {
+    const sql = `
+        SELECT
+            u.user_id AS userId,
+            u.login_id AS loginId,
+            u.nickname AS nickname,
+            wm.role AS role,
+            wm.last_read_message_id AS lastReadMessageId
+        FROM workspace_members wm
+        JOIN users u
+            ON wm.user_id = u.user_id
+        WHERE wm.workspace_id = ?
+        ORDER BY
+            CASE
+                WHEN wm.role = 'LEADER' THEN 0
+                ELSE 1
+            END,
+            u.nickname ASC
+    `;
+
+    const [rows] = await pool.query(sql, [workspaceId]);
+
+    return rows;
+};
+
 // 워크스페이스 초대 생성
 exports.createInvitation = async ({ workspaceId, userId, status }) => {
     const sql = `

@@ -54,4 +54,8 @@ router.patch('/:workspaceId/owner', workspaceController.transferWorkspaceLeader)
  */
 router.get('/:workspaceId/messages', chatController.getChatMessages);
 
+// 워크스페이스 멤버 목록 조회 API
+// GET /api/workspaces/:workspaceId/members?userId=1
+router.get('/:workspaceId/members', workspaceController.getWorkspaceMembers);
+
 module.exports = router;

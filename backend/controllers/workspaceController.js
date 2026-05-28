@@ -323,3 +323,38 @@ exports.transferWorkspaceLeader = async (req, res) => {
         });
     }
 };
+
+// 워크스페이스 멤버 목록 조회 컨트롤러
+exports.getWorkspaceMembers = async (req, res) => {
+    try {
+        const { workspaceId } = req.params;
+        const { userId } = req.query;
+
+        if (!workspaceId || !userId) {
+            return res.status(400).json({
+                success: false,
+                message: '필수 입력값이 누락되었습니다.',
+            });
+        }
+
+        const members = await workspaceService.getWorkspaceMembers({
+            workspaceId,
+            userId,
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: '워크스페이스 멤버 목록 조회 성공',
+            data: members,
+            count: members.length,
+        });
+
+    } catch (error) {
+        console.error('워크스페이스 멤버 목록 조회 오류:', error);
+
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || '서버 오류가 발생했습니다.',
+        });
+    }
+};
