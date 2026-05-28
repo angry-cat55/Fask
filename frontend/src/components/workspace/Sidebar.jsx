@@ -49,6 +49,13 @@ const MembersIcon = () => (
     <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
   </Ico>
 );
+const RefreshIcon = () => (
+  <Ico size={13}>
+    <polyline points="23 4 23 10 17 10" />
+    <polyline points="1 20 1 14 7 14" />
+    <path d="M3.51 9a9 9 0 0114.36-3.36L23 10M1 14l5.13 4.36A9 9 0 0020.49 15" />
+  </Ico>
+);
 const MemberListIcon = () => (
   <Ico>
     <line x1="8" y1="6" x2="21" y2="6" />
@@ -356,9 +363,10 @@ const Sidebar = ({
                           <button
                             onClick={fetchMembers}
                             disabled={membersLoading}
-                            className="text-[10px] text-slate-500 hover:text-slate-300 transition disabled:opacity-40"
+                            title="새로고침"
+                            className={`text-slate-500 hover:text-slate-300 transition disabled:opacity-40 ${membersLoading ? 'animate-spin' : ''}`}
                           >
-                            새로고침
+                            <RefreshIcon />
                           </button>
                         </div>
 
