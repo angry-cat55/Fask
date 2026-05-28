@@ -206,7 +206,7 @@ const WorkspacePage = ({ user, onLogout, onUserUpdate }) => {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <InboxView />
+              <InboxView user={user} />
             </div>
           </div>
         )}
