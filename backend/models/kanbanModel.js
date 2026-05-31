@@ -68,3 +68,61 @@ exports.createManualTask = async ({
         title,
     };
 };
+
+
+
+// taskId로 태스크 조회
+exports.findTaskById = async (taskId) => {
+    const sql = `
+        SELECT *
+        FROM kanban_tasks
+        WHERE task_id = ?
+    `;
+
+    const [rows] = await pool.query(sql, [taskId]);
+
+    return rows[0] || null;
+};
+
+// kanbanId로 칸반 보드 조회
+exports.findKanbanById = async (kanbanId) => {
+    const sql = `
+        SELECT *
+        FROM kanbans
+        WHERE kanban_id = ?
+    `;
+
+    const [rows] = await pool.query(sql, [kanbanId]);
+
+    return rows[0] || null;
+};
+
+// 태스크 수정
+exports.updateTask = async ({
+    taskId,
+    title,
+    content,
+    startTime,
+    endTime,
+    status,
+}) => {
+    const sql = `
+        UPDATE kanban_tasks
+        SET title = ?,
+            content = ?,
+            start_time = ?,
+            end_time = ?,
+            status = ?,
+            updated_at = NOW()
+        WHERE task_id = ?
+    `;
+
+    await pool.query(sql, [
+        title,
+        content,
+        startTime,
+        endTime,
+        status,
+        taskId,
+    ]);
+};

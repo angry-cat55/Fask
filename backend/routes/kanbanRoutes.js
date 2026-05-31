@@ -8,5 +8,8 @@ const kanbanController = require('../controllers/kanbanController');
 // POST /api/workspaces/:workspaceId/tasks
 router.post('/:workspaceId/tasks', kanbanController.createManualTask);
 
+// 태스크 수정 API
+// PATCH /api/tasks/:taskId
+router.patch('/:taskId', kanbanController.updateTask);
 
 module.exports = router;

@@ -14,7 +14,6 @@ const userRoutes = require('./routes/userRoutes');
 const workspaceRoutes = require('./routes/workspaceRoutes');
 const kanbanRoutes = require('./routes/kanbanRoutes');
 
-
 app.use(cors());
 app.use(express.json());
 
@@ -30,6 +29,9 @@ app.use('/api/auth', authRoutes); // /api/auth 경로로 들어오는 요청은 
 app.use('/api/users', userRoutes); // /api/users 경로로 들어오는 요청은 userRoutes에서 처리
 app.use('/api/workspaces', workspaceRoutes); // /api/workspaces 경로로 들어오는 요청은 workspaceRoutes에서 처리
 app.use('/api/workspaces', kanbanRoutes); // /api/workspaces 경로로 들어오는 요청 중 kanbanRoutes에서 처리할 수 있는 요청은 kanbanRoutes에서 처리
+ app.use('/api/tasks', kanbanRoutes); // /api/tasks 경로로 들어오는 요청은 kanbanRoutes에서 처리
+
+
 server.listen(PORT, () => {
     console.log(`Backend server running on port ${PORT}`);
 });
