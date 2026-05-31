@@ -75,3 +75,87 @@ exports.createManualTask = async ({
 
     return task;
 };
+
+
+
+// 태스크 수정 비즈니스 로직
+exports.updateTask = async ({
+    taskId,
+    userId,
+    kanbanId,
+    title,
+    content,
+    startTime,
+    endTime,
+    status,
+}) => {
+    // 1. status 값 검증
+    const allowedStatuses = ['TODO', 'IN_PROGRESS', 'DONE'];
+
+    if (!allowedStatuses.includes(status)) {
+        const error = new Error('status는 TODO, IN_PROGRESS, DONE 중 하나여야 합니다.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // 2. 태스크 존재 확인
+    const task = await kanbanModel.findTaskById(taskId);
+
+    if (!task) {
+        const error = new Error('해당 태스크를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 3. 요청한 kanbanId와 태스크의 kanban_id가 일치하는지 확인
+    if (Number(task.kanban_id) !== Number(kanbanId)) {
+        const error = new Error('태스크가 해당 칸반 보드에 속해있지 않습니다.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // 4. 칸반 보드 존재 확인
+    const kanban = await kanbanModel.findKanbanById(kanbanId);
+
+    if (!kanban) {
+        const error = new Error('해당 칸반 보드를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 5. 요청한 유저가 해당 워크스페이스 멤버인지 확인
+    const member = await workspaceModel.findWorkspaceMember({
+        workspaceId: kanban.workspace_id,
+        userId,
+    });
+
+    if (!member) {
+        const error = new Error('해당 워크스페이스에 참여한 사용자가 아닙니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 6. 제목 공백 검증
+    const trimmedTitle = title.trim();
+    const trimmedContent = content.trim();
+
+    if (trimmedTitle === '') {
+        const error = new Error('태스크 제목을 입력해주세요.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // 7. 태스크 수정
+    await kanbanModel.updateTask({
+        taskId,
+        title: trimmedTitle,
+        content: trimmedContent,
+        startTime,
+        endTime,
+        status,
+    });
+
+    return {
+        message: '태스크 수정 성공',
+    };
+};
