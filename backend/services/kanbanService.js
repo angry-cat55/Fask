@@ -159,3 +159,39 @@ exports.updateTask = async ({
         message: '태스크 수정 성공',
     };
 };
+
+// 태스크 삭제 비즈니스 로직
+exports.deleteTask = async ({ taskId, userId }) => {
+    // 1. 태스크 존재 확인
+    const task = await kanbanModel.findTaskById(taskId);
+
+    if (!task) {
+        const error = new Error('해당 태스크를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. 태스크가 속한 칸반 보드 조회
+    const kanban = await kanbanModel.findKanbanById(task.kanban_id);
+
+    if (!kanban) {
+        const error = new Error('해당 칸반 보드를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 3. 요청한 유저가 해당 워크스페이스 멤버인지 확인
+    const member = await workspaceModel.findWorkspaceMember({
+        workspaceId: kanban.workspace_id,
+        userId,
+    });
+
+    if (!member) {
+        const error = new Error('해당 워크스페이스에 참여한 사용자가 아닙니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 4. 태스크 삭제
+    await kanbanModel.deleteTaskById(taskId);
+};
