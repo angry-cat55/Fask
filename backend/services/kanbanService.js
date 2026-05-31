@@ -76,7 +76,43 @@ exports.createManualTask = async ({
     return task;
 };
 
+// 칸반 보드 조회 비즈니스 로직
+exports.getKanbanTasks = async ({ workspaceId, userId }) => {
+    // 1. 워크스페이스 존재 확인
+    const workspace = await workspaceModel.findWorkspaceById(workspaceId);
 
+    if (!workspace) {
+        const error = new Error('해당 워크스페이스를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. 요청한 유저가 해당 워크스페이스 멤버인지 확인
+    const member = await workspaceModel.findWorkspaceMember({
+        workspaceId,
+        userId,
+    });
+
+    if (!member) {
+        const error = new Error('해당 워크스페이스에 참여한 사용자가 아닙니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 3. 해당 워크스페이스의 칸반 보드 조회
+    const kanban = await kanbanModel.findKanbanByWorkspaceId(workspaceId);
+
+    if (!kanban) {
+        const error = new Error('해당 워크스페이스의 칸반 보드를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 4. 칸반 보드에 속한 태스크 목록 조회
+    const tasks = await kanbanModel.findTasksByKanbanId(kanban.kanban_id);
+
+    return tasks;
+};
 
 // 태스크 수정 비즈니스 로직
 exports.updateTask = async ({
