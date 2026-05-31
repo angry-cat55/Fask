@@ -12,4 +12,8 @@ router.post('/:workspaceId/tasks', kanbanController.createManualTask);
 // PATCH /api/tasks/:taskId
 router.patch('/:taskId', kanbanController.updateTask);
 
+// 태스크 삭제 API
+// DELETE /api/tasks/:taskId
+router.delete('/:taskId', kanbanController.deleteTask);
+
 module.exports = router;

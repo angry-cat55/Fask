@@ -126,3 +126,13 @@ exports.updateTask = async ({
         taskId,
     ]);
 };
+
+// taskId로 태스크 삭제
+exports.deleteTaskById = async (taskId) => {
+    const sql = `
+        DELETE FROM kanban_tasks
+        WHERE task_id = ?
+    `;
+
+    await pool.query(sql, [taskId]);
+};
