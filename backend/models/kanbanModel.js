@@ -69,7 +69,29 @@ exports.createManualTask = async ({
     };
 };
 
+// kanbanId로 태스크 목록 조회
+exports.findTasksByKanbanId = async (kanbanId) => {
+    const sql = `
+        SELECT
+            task_id AS taskId,
+            kanban_id AS kanbanId,
+            manager_id AS managerId,
+            title,
+            content,
+            start_time AS startTime,
+            end_time AS endTime,
+            status,
+            created_at AS createdAt,
+            updated_at AS updatedAt
+        FROM kanban_tasks
+        WHERE kanban_id = ?
+        ORDER BY created_at DESC
+    `;
 
+    const [rows] = await pool.query(sql, [kanbanId]);
+
+    return rows;
+};
 
 // taskId로 태스크 조회
 exports.findTaskById = async (taskId) => {
