@@ -5,12 +5,8 @@ import ChatView from '../components/workspace/ChatView.jsx';
 import InboxView from '../components/workspace/InboxView.jsx';
 import SummaryView from '../components/workspace/SummaryView.jsx';
 import ProfileView from '../components/workspace/ProfileView.jsx';
+import WorkspaceSettingsView from '../components/workspace/WorkspaceSettingsView.jsx';
 
-const WorkspaceSettingsView = () => (
-  <div className="p-8">
-    <h2 className="text-2xl font-bold text-white">워크스페이스 설정</h2>
-  </div>
-);
 
 const renderPanel = (id, user, chatProps, summaries) => {
   switch (id) {
@@ -26,7 +22,7 @@ const renderPanel = (id, user, chatProps, summaries) => {
 };
 
 // ── WorkspacePage ────────────────────────────────────────────────────────────
-const WorkspacePage = ({ user, onLogout, onUserUpdate }) => {
+const WorkspacePage = ({ user, onLogout, onUserUpdate, onLeaveWorkspace }) => {
   const [openPanels, setOpenPanels] = useState([]);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
   const [exclusiveView, setExclusiveView] = useState(null);
@@ -166,7 +162,7 @@ const WorkspacePage = ({ user, onLogout, onUserUpdate }) => {
         {exclusiveView ? (
           <div className="flex-1 overflow-hidden bg-slate-950">
             {exclusiveView === 'profile' && <ProfileView user={user} onLogout={onLogout} onUserUpdate={onUserUpdate} />}
-            {exclusiveView === 'workspace-settings' && <WorkspaceSettingsView />}
+            {exclusiveView === 'workspace-settings' && <WorkspaceSettingsView user={user} onLeaveWorkspace={onLeaveWorkspace} />}
           </div>
         ) : openPanels.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4">
