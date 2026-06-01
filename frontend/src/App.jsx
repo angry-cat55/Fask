@@ -38,6 +38,13 @@ function App() {
     setUser(updatedUser);
   };
 
+  const handleLeaveWorkspace = () => {
+    const { workspaceId, ...rest } = user ?? {};
+    localStorage.setItem('user', JSON.stringify(rest));
+    setUser(rest);
+    setCurrentPage('workspace-landing');
+  };
+
   if (currentPage === 'workspace-landing') {
     const enterWorkspace = (workspaceId) => {
       setUser((u) => ({ ...u, workspaceId }));
@@ -56,7 +63,7 @@ function App() {
   }
 
   if (currentPage === 'workspace') {
-    return <WorkspacePage user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} />;
+    return <WorkspacePage user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} onLeaveWorkspace={handleLeaveWorkspace} />;
   }
 
   return (
