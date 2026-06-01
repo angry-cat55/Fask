@@ -38,6 +38,10 @@ exports.getUnreadMessageCount = async (workspaceId, userId) => {
 
 // 워크스페이스 내의 채팅 내역 조회 비즈니스 로직
 exports.getChatMessages = async (workspaceId, userId, cursor, limit, direction) => {
+
+    // limit 정수로 변환
+    if (limit) limit = Number(limit);
+
     // 워크스페이스 ID가 유효한지 확인
     const workspace = await workspaceModel.findWorkspaceById(workspaceId);
     if (!workspace) {
