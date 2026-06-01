@@ -5,7 +5,7 @@ const workspaceModel = require('../models/workspaceModel');
 
 const executeWorkspaceSummary = async (workspaceId, userId) => {
     // 유저가 워크스페이스 멤버인지 확인
-    const isMember = await workspaceModel.findWorkspaceMember(workspaceId, userId);
+    const isMember = await workspaceModel.findWorkspaceMember({ workspaceId, userId });
     if (!isMember) {
         const error = new Error('해당 워크스페이스에 참여한 사용자가 아닙니다.');
         error.statusCode = 403;
