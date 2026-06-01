@@ -389,16 +389,23 @@ const ChatView = ({
         ? api.sendMessage(workspaceId, userId, content)
         : api.sendMessage(null, null, content, nickname ?? '나'));
       if (result.success) {
-        scrollAdjustmentRef.current = { type: 'bottom' };
-        setMessages((prev) => [
-          ...prev,
-          {
-            messageId: result.data.messageId,
-            nickname: nickname ?? '나',
-            sendAt: result.data.sendAt,
-            content,
-          },
-        ]);
+        const sentMessage = {
+          messageId: result.data.messageId,
+          nickname: nickname ?? '나',
+          sendAt: result.data.sendAt,
+          content,
+        };
+
+        setMessages((prev) => {
+          if (
+            prev.some((message) => message.messageId === sentMessage.messageId)
+          ) {
+            return prev;
+          }
+
+          scrollAdjustmentRef.current = { type: 'bottom' };
+          return [...prev, sentMessage];
+        });
         setInput('');
         textareaRef.current.style.height = 'auto';
       } else {
