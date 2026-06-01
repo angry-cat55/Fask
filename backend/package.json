@@ -12,13 +12,16 @@
     "license": "ISC",
     "type": "commonjs",
     "dependencies": {
+        "@ai-sdk/google": "^3.0.80",
+        "ai": "^6.0.193",
         "bcrypt": "^6.0.0",
         "cors": "^2.8.6",
         "dotenv": "^17.3.1",
         "express": "^5.2.1",
         "jsonwebtoken": "^9.0.3",
         "mysql2": "^3.20.0",
-        "socket.io": "^4.8.3"
+        "socket.io": "^4.8.3",
+        "zod": "^4.4.3"
     },
     "devDependencies": {
         "eslint-config-prettier": "^10.1.8"
