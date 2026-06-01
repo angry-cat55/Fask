@@ -16,9 +16,16 @@ function App() {
       return null;
     }
   });
-  const [currentPage, setCurrentPage] = useState(() =>
-    localStorage.getItem('user') ? 'workspace' : 'login'
-  );
+  const [currentPage, setCurrentPage] = useState(() => {
+    try {
+      const saved = localStorage.getItem('user');
+      if (!saved) return 'login';
+      const u = JSON.parse(saved);
+      return u?.workspaceId ? 'workspace' : 'workspace-landing';
+    } catch {
+      return 'login';
+    }
+  });
 
   const handleLoginSuccess = (userData) => {
     localStorage.setItem('user', JSON.stringify(userData));
@@ -36,6 +43,12 @@ function App() {
   const handleUserUpdate = (updatedUser) => {
     localStorage.setItem('user', JSON.stringify(updatedUser));
     setUser(updatedUser);
+  };
+
+  const handleSwitchWorkspace = (workspaceId) => {
+    const updated = { ...user, workspaceId };
+    localStorage.setItem('user', JSON.stringify(updated));
+    setUser(updated);
   };
 
   const handleLeaveWorkspace = () => {
@@ -63,7 +76,7 @@ function App() {
   }
 
   if (currentPage === 'workspace') {
-    return <WorkspacePage user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} onLeaveWorkspace={handleLeaveWorkspace} />;
+    return <WorkspacePage key={user?.workspaceId} user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} onLeaveWorkspace={handleLeaveWorkspace} onSwitchWorkspace={handleSwitchWorkspace} />;
   }
 
   return (
