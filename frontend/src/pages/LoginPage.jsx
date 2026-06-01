@@ -6,13 +6,17 @@ const LoginPage = ({
   onNavigateToResetPassword,
   onLoginSuccess,
 }) => {
-  const [loginId, setLoginId] = useState('');
+  const [loginId, setLoginId] = useState(
+    () => localStorage.getItem('savedLoginId') ?? ''
+  );
   const [password, setPassword] = useState('');
+  const [saveId, setSaveId] = useState(
+    () => !!localStorage.getItem('savedLoginId')
+  );
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // API 명세서 규격: POST /api/auth/login
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -22,6 +26,11 @@ const LoginPage = ({
       const result = await response.json();
 
       if (result.success) {
+        if (saveId) {
+          localStorage.setItem('savedLoginId', loginId);
+        } else {
+          localStorage.removeItem('savedLoginId');
+        }
         onLoginSuccess(result.data);
       } else {
         alert(result.message || '로그인 실패');
@@ -64,6 +73,8 @@ const LoginPage = ({
               <label className="flex items-center gap-2 text-sm text-slate-300">
                 <input
                   type="checkbox"
+                  checked={saveId}
+                  onChange={(e) => setSaveId(e.target.checked)}
                   className="h-4 w-4 rounded border-white/20 bg-white/10 text-cyan-400 accent-cyan-400"
                 />
                 아이디 저장
