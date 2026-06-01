@@ -1,7 +1,28 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import ChatBubble from './ChatBubble.jsx';
 
 const LIMIT = 30;
+const TOP_THRESHOLD = 72;
+const BOTTOM_THRESHOLD = 48;
+
+const extractMessages = (payload) =>
+  Array.isArray(payload) ? payload : (payload?.messages ?? []);
+
+const extractLastReadMessageId = (payload) =>
+  Array.isArray(payload) ? null : (payload?.lastReadMessageId ?? null);
+
+const mergeMessages = (currentMessages, incomingMessages, mode) => {
+  const currentIds = new Set(
+    currentMessages.map((message) => message.messageId),
+  );
+  const filteredIncoming = incomingMessages.filter(
+    (message) => !currentIds.has(message.messageId),
+  );
+
+  return mode === 'prepend'
+    ? [...filteredIncoming, ...currentMessages]
+    : [...currentMessages, ...filteredIncoming];
+};
 
 // ── Mock (workspaceId 없을 때 사용) ──────────────────────────────────────────
 let mockMessages = [
@@ -160,15 +181,123 @@ const ChatView = ({
   const [lastReadMessageId, setLastReadMessageId] = useState(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [loadingNewer, setLoadingNewer] = useState(false);
+  const [hasMoreOlder, setHasMoreOlder] = useState(false);
+  const [hasMoreNewer, setHasMoreNewer] = useState(false);
   const [sending, setSending] = useState(false);
-  const bottomRef = useRef(null);
+  const scrollContainerRef = useRef(null);
   const textareaRef = useRef(null);
   const unreadRef = useRef(null);
+  const scrollAdjustmentRef = useRef(null);
+  const stickToBottomRef = useRef(true);
   const unreadBoundaryMessageId =
     firstUnreadMessageId ??
     (lastReadMessageId != null ? lastReadMessageId + 1 : null);
+
+  const scrollToBottom = (behavior = 'auto') => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    container.scrollTo({ top: container.scrollHeight, behavior });
+  };
+
+  const loadOlderMessages = async () => {
+    if (loadingOlder || !hasMoreOlder || messages.length === 0) return;
+
+    const container = scrollContainerRef.current;
+    const previousScrollHeight = container?.scrollHeight ?? 0;
+    const previousScrollTop = container?.scrollTop ?? 0;
+    const cursor = messages[0].messageId;
+
+    setLoadingOlder(true);
+    try {
+      const result = await (workspaceId
+        ? api.fetchMessages(workspaceId, userId, {
+            cursor,
+            direction: 'older',
+          })
+        : api.fetchMessages({ cursor, direction: 'older' }));
+
+      if (result.success) {
+        const incomingMessages = extractMessages(result.data);
+
+        if (incomingMessages.length > 0) {
+          scrollAdjustmentRef.current = {
+            type: 'prepend',
+            previousScrollHeight,
+            previousScrollTop,
+          };
+
+          setMessages((prev) =>
+            mergeMessages(prev, incomingMessages, 'prepend'),
+          );
+        }
+
+        setHasMoreOlder(incomingMessages.length >= LIMIT);
+      }
+    } catch (err) {
+      console.error('이전 메시지 로드 오류:', err);
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
+
+  const loadNewerMessages = async () => {
+    if (loadingNewer || !hasMoreNewer || messages.length === 0) return;
+
+    const cursor = messages[messages.length - 1].messageId;
+
+    setLoadingNewer(true);
+    try {
+      const result = await (workspaceId
+        ? api.fetchMessages(workspaceId, userId, {
+            cursor,
+            direction: 'newer',
+          })
+        : api.fetchMessages({ cursor, direction: 'newer' }));
+
+      if (result.success) {
+        const incomingMessages = extractMessages(result.data);
+
+        if (incomingMessages.length > 0) {
+          if (stickToBottomRef.current) {
+            scrollAdjustmentRef.current = { type: 'bottom' };
+          }
+
+          setMessages((prev) =>
+            mergeMessages(prev, incomingMessages, 'append'),
+          );
+        }
+
+        setHasMoreNewer(incomingMessages.length >= LIMIT);
+      }
+    } catch (err) {
+      console.error('최신 메시지 로드 오류:', err);
+    } finally {
+      setLoadingNewer(false);
+    }
+  };
+
+  const handleScroll = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const distanceToBottom = scrollHeight - scrollTop - clientHeight;
+    const isScrollable = scrollHeight > clientHeight + 1;
+
+    stickToBottomRef.current = distanceToBottom <= BOTTOM_THRESHOLD;
+
+    if (!isScrollable) return;
+
+    if (scrollTop <= TOP_THRESHOLD && hasMoreOlder && !loadingOlder) {
+      void loadOlderMessages();
+    }
+
+    if (distanceToBottom <= BOTTOM_THRESHOLD && hasMoreNewer && !loadingNewer) {
+      void loadNewerMessages();
+    }
+  };
 
   useEffect(() => {
     let isCancelled = false;
@@ -176,7 +305,8 @@ const ChatView = ({
     setLoading(true);
     setMessages([]);
     setLastReadMessageId(null);
-    setHasMore(false);
+    setHasMoreOlder(false);
+    setHasMoreNewer(false);
 
     (async () => {
       try {
@@ -184,17 +314,14 @@ const ChatView = ({
           ? api.fetchMessages(workspaceId, userId)
           : api.fetchMessages());
         const payload = result?.data;
-        const nextMessages = Array.isArray(payload)
-          ? payload
-          : (payload?.messages ?? []);
-        const nextLastReadMessageId = Array.isArray(payload)
-          ? null
-          : (payload?.lastReadMessageId ?? null);
+        const nextMessages = extractMessages(payload);
+        const nextLastReadMessageId = extractLastReadMessageId(payload);
 
         if (!isCancelled && result.success) {
           setMessages(nextMessages);
           setLastReadMessageId(nextLastReadMessageId);
-          setHasMore(nextMessages.length >= LIMIT);
+          setHasMoreOlder(nextMessages.length > 0);
+          setHasMoreNewer(nextMessages.length > 0);
         }
       } catch (err) {
         if (!isCancelled) {
@@ -212,12 +339,30 @@ const ChatView = ({
     };
   }, [workspaceId, userId, api]);
 
+  useLayoutEffect(() => {
+    const action = scrollAdjustmentRef.current;
+    if (!action) return;
+
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    if (action.type === 'prepend') {
+      container.scrollTop =
+        action.previousScrollTop +
+        (container.scrollHeight - action.previousScrollHeight);
+    } else if (action.type === 'bottom') {
+      scrollToBottom();
+    }
+
+    scrollAdjustmentRef.current = null;
+  }, [messages]);
+
   useEffect(() => {
     if (!loading) {
       if (unreadBoundaryMessageId && unreadRef.current) {
         unreadRef.current.scrollIntoView({ block: 'center' });
       } else {
-        bottomRef.current?.scrollIntoView();
+        scrollToBottom();
       }
     }
   }, [loading, unreadBoundaryMessageId]);
@@ -228,32 +373,12 @@ const ChatView = ({
     setMessages((prev) => {
       if (prev.some((m) => m.messageId === latestSocketMessage.messageId))
         return prev;
+      if (stickToBottomRef.current) {
+        scrollAdjustmentRef.current = { type: 'bottom' };
+      }
       return [...prev, latestSocketMessage];
     });
-    setTimeout(
-      () => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }),
-      50,
-    );
   }, [latestSocketMessage]);
-
-  const loadMore = async () => {
-    if (loadingMore || !hasMore || messages.length === 0) return;
-    const cursor = messages[0].messageId;
-    setLoadingMore(true);
-    try {
-      const result = await (workspaceId
-        ? api.fetchMessages(workspaceId, userId, { cursor, direction: 'prev' })
-        : api.fetchMessages({ cursor, direction: 'prev' }));
-      if (result.success && Array.isArray(result.data)) {
-        setMessages((prev) => [...result.data, ...prev]);
-        setHasMore(result.data.length >= LIMIT);
-      }
-    } catch (err) {
-      console.error('이전 메시지 로드 오류:', err);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
 
   const handleSend = async () => {
     const content = input.trim();
@@ -264,6 +389,7 @@ const ChatView = ({
         ? api.sendMessage(workspaceId, userId, content)
         : api.sendMessage(null, null, content, nickname ?? '나'));
       if (result.success) {
+        scrollAdjustmentRef.current = { type: 'bottom' };
         setMessages((prev) => [
           ...prev,
           {
@@ -275,10 +401,6 @@ const ChatView = ({
         ]);
         setInput('');
         textareaRef.current.style.height = 'auto';
-        setTimeout(
-          () => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }),
-          50,
-        );
       } else {
         alert(result.message || '메시지 전송에 실패했습니다.');
       }
@@ -345,6 +467,8 @@ const ChatView = ({
 
       {/* 메시지 목록 */}
       <div
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
         className="flex flex-1 flex-col overflow-y-auto px-4 py-3 gap-3
           [&::-webkit-scrollbar]:w-1
           [&::-webkit-scrollbar-track]:bg-transparent
@@ -352,14 +476,10 @@ const ChatView = ({
           [&::-webkit-scrollbar-thumb]:bg-white/10
           hover:[&::-webkit-scrollbar-thumb]:bg-white/20"
       >
-        {hasMore && (
-          <button
-            onClick={loadMore}
-            disabled={loadingMore}
-            className="mx-auto mb-1 rounded-full border border-white/10 px-4 py-1 text-xs text-slate-500 transition hover:text-slate-300 disabled:opacity-50"
-          >
-            {loadingMore ? '불러오는 중...' : '이전 메시지 보기'}
-          </button>
+        {loadingOlder && (
+          <div className="text-center text-[11px] text-slate-500">
+            이전 메시지를 불러오는 중...
+          </div>
         )}
 
         {messages.length === 0 ? (
@@ -387,7 +507,11 @@ const ChatView = ({
             </React.Fragment>
           ))
         )}
-        <div ref={bottomRef} />
+        {loadingNewer && (
+          <div className="text-center text-[11px] text-slate-500">
+            최신 메시지를 불러오는 중...
+          </div>
+        )}
       </div>
 
       {/* 입력창 */}
