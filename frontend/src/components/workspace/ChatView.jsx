@@ -191,6 +191,7 @@ const ChatView = ({
   const unreadRef = useRef(null);
   const scrollAdjustmentRef = useRef(null);
   const stickToBottomRef = useRef(true);
+  const tempMessageIdRef = useRef(0);
   const unreadBoundaryMessageId =
     firstUnreadMessageId ??
     (lastReadMessageId != null ? lastReadMessageId + 1 : null);
@@ -373,16 +374,49 @@ const ChatView = ({
     setMessages((prev) => {
       if (prev.some((m) => m.messageId === latestSocketMessage.messageId))
         return prev;
+
+      if (String(latestSocketMessage.userId) === String(userId)) {
+        const pendingIndex = prev.findIndex(
+          (message) =>
+            typeof message.messageId === 'string' &&
+            message.messageId.startsWith('temp-') &&
+            message.content === latestSocketMessage.content,
+        );
+
+        if (pendingIndex !== -1) {
+          const nextMessages = [...prev];
+          nextMessages[pendingIndex] = latestSocketMessage;
+          return nextMessages;
+        }
+      }
+
       if (stickToBottomRef.current) {
         scrollAdjustmentRef.current = { type: 'bottom' };
       }
       return [...prev, latestSocketMessage];
     });
-  }, [latestSocketMessage]);
+  }, [latestSocketMessage, userId]);
 
   const handleSend = async () => {
     const content = input.trim();
     if (!content || sending) return;
+
+    const tempMessageId = `temp-${Date.now()}-${tempMessageIdRef.current++}`;
+    const optimisticMessage = {
+      messageId: tempMessageId,
+      userId,
+      nickname: nickname ?? '나',
+      sendAt: new Date().toISOString(),
+      content,
+    };
+
+    setMessages((prev) => {
+      scrollAdjustmentRef.current = { type: 'bottom' };
+      return [...prev, optimisticMessage];
+    });
+
+    setInput('');
+    textareaRef.current.style.height = 'auto';
     setSending(true);
     try {
       const result = await (workspaceId
@@ -393,25 +427,42 @@ const ChatView = ({
           messageId: result.data.messageId,
           nickname: nickname ?? '나',
           sendAt: result.data.sendAt,
+          userId,
           content,
         };
 
         setMessages((prev) => {
-          if (
-            prev.some((message) => message.messageId === sentMessage.messageId)
-          ) {
-            return prev;
+          const tempIndex = prev.findIndex(
+            (message) => message.messageId === tempMessageId,
+          );
+
+          if (tempIndex === -1) {
+            if (
+              prev.some(
+                (message) => message.messageId === sentMessage.messageId,
+              )
+            ) {
+              return prev;
+            }
+
+            scrollAdjustmentRef.current = { type: 'bottom' };
+            return [...prev, sentMessage];
           }
 
-          scrollAdjustmentRef.current = { type: 'bottom' };
-          return [...prev, sentMessage];
+          const nextMessages = [...prev];
+          nextMessages[tempIndex] = sentMessage;
+          return nextMessages;
         });
-        setInput('');
-        textareaRef.current.style.height = 'auto';
       } else {
+        setMessages((prev) =>
+          prev.filter((message) => message.messageId !== tempMessageId),
+        );
         alert(result.message || '메시지 전송에 실패했습니다.');
       }
     } catch (err) {
+      setMessages((prev) =>
+        prev.filter((message) => message.messageId !== tempMessageId),
+      );
       console.error('메시지 전송 오류:', err);
     } finally {
       setSending(false);
