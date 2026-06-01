@@ -58,4 +58,8 @@ router.get('/:workspaceId/messages', chatController.getChatMessages);
 // GET /api/workspaces/:workspaceId/members?userId=1
 router.get('/:workspaceId/members', workspaceController.getWorkspaceMembers);
 
+// 워크스페이스의 대화 내용 수동 요약 API
+// POST /api/workspaces/:workspaceId/messages/summary
+router.post('/:workspaceId/messages/summary', workspaceController.summarizeChatMessages);
+
 module.exports = router;

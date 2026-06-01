@@ -1,4 +1,5 @@
 const workspaceService = require('../services/workspaceService');
+const summaryService = require('../services/summaryService');
 
 // 워크스페이스 생성 컨트롤러
 exports.createWorkspace = async (req, res) => {
@@ -353,6 +354,39 @@ exports.getWorkspaceMembers = async (req, res) => {
 
     } catch (error) {
         console.error('워크스페이스 멤버 목록 조회 오류:', error);
+
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || '서버 오류가 발생했습니다.',
+        });
+    }
+};
+
+// 워크스페이스의 대화 내용 수동 요약 컨트롤러
+exports.summarizeChatMessages = async (req, res) => {
+    try {
+        const { workspaceId } = req.params;
+        const { userId } = req.body;
+
+        // 필수 입력값 확인
+        if (!workspaceId || !userId) {
+            return res.status(400).json({
+                success: false,
+                message: '필수 입력값이 누락되었습니다.',
+            });
+        }
+
+        // 수동 요약 실행
+        // 과정: summaryService -> aiService -> summaryModel, chatModel -> DB 저장 -> 결과 반환
+        const result = await summaryService.executeWorkspaceSummary(workspaceId, userId);
+        
+        return res.status(result.statusCode).json({
+            success: true,
+            message: result.message,
+            data: result.data,
+        });
+    } catch (error) {
+        console.error('대화 내용 수동 요약 중 오류:', error);
 
         return res.status(error.statusCode || 500).json({
             success: false,

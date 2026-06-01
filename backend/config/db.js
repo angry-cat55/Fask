@@ -13,6 +13,9 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
 
+  // 다중 쿼리 허용 (한 번의 호출로 INSERT + SELECT 등 실행 가능)
+  multipleStatements: true,
+
   // 연결 사용 가능할 때까지 대기 여부
   waitForConnections: true,
   // 동시에 사용할 수 있는 최대 연결 개수
