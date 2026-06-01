@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { io } from 'socket.io-client';
 import Sidebar from '../components/workspace/Sidebar.jsx';
 import KanbanBoard from '../components/workspace/KanbanBoard.jsx';
 import ChatView from '../components/workspace/ChatView.jsx';
@@ -7,13 +8,14 @@ import SummaryView from '../components/workspace/SummaryView.jsx';
 import ProfileView from '../components/workspace/ProfileView.jsx';
 import WorkspaceSettingsView from '../components/workspace/WorkspaceSettingsView.jsx';
 
-
 const renderPanel = (id, user, chatProps, summaries) => {
   switch (id) {
     case 'chat':
       return <ChatView {...chatProps} />;
     case 'kanban':
-      return <KanbanBoard userId={user?.userId} workspaceId={user?.workspaceId} />;
+      return (
+        <KanbanBoard userId={user?.userId} workspaceId={user?.workspaceId} />
+      );
     case 'summary':
       return <SummaryView summaries={summaries} />;
     default:
@@ -22,7 +24,13 @@ const renderPanel = (id, user, chatProps, summaries) => {
 };
 
 // ── WorkspacePage ────────────────────────────────────────────────────────────
-const WorkspacePage = ({ user, onLogout, onUserUpdate, onLeaveWorkspace, onSwitchWorkspace }) => {
+const WorkspacePage = ({
+  user,
+  onLogout,
+  onUserUpdate,
+  onLeaveWorkspace,
+  onSwitchWorkspace,
+}) => {
   const [openPanels, setOpenPanels] = useState([]);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
   const [exclusiveView, setExclusiveView] = useState(null);
@@ -33,6 +41,7 @@ const WorkspacePage = ({ user, onLogout, onUserUpdate, onLeaveWorkspace, onSwitc
   const [summaries, setSummaries] = useState([]);
 
   const socketMessageHandler = useRef(null);
+  const socketRef = useRef(null);
 
   useEffect(() => {
     socketMessageHandler.current = (msg) => {
@@ -50,20 +59,35 @@ const WorkspacePage = ({ user, onLogout, onUserUpdate, onLeaveWorkspace, onSwitc
     const userId = user?.userId;
     if (!workspaceId || !userId) return;
 
-    const ws = new WebSocket(
-      `ws://${location.host}/ws/workspaces/${workspaceId}?userId=${userId}`,
+    const socket = io(
+      import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000',
+      {
+        transports: ['websocket'],
+        auth: { userId },
+      },
     );
-    ws.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
-        socketMessageHandler.current?.(msg);
-      } catch {
-        console.error('소켓 메시지 파싱 오류');
+
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      socket.emit('join_workspace', { workspaceId });
+    });
+
+    socket.on('new_message', (msg) => {
+      socketMessageHandler.current?.(msg);
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket.IO 연결 오류:', error);
+    });
+
+    return () => {
+      socket.emit('leave_workspace', { workspaceId });
+      socket.disconnect();
+      if (socketRef.current === socket) {
+        socketRef.current = null;
       }
     };
-    ws.onerror = () => console.error('WebSocket 연결 오류');
-
-    return () => ws.close();
   }, [user?.workspaceId, user?.userId]);
 
   const handleSelect = (id) => {
@@ -92,12 +116,12 @@ const WorkspacePage = ({ user, onLogout, onUserUpdate, onLeaveWorkspace, onSwitc
 
     setOpenPanels((prev) => {
       const isExist = prev.includes(id);
-      
+
       if (isExist) {
         return prev.filter((p) => p !== id);
       } else {
         let filtered = [...prev];
-        
+
         if (id === 'kanban') {
           filtered = filtered.filter((p) => p !== 'summary');
         }
@@ -148,12 +172,22 @@ const WorkspacePage = ({ user, onLogout, onUserUpdate, onLeaveWorkspace, onSwitc
 
       {/* 💡 relative 속성을 주어 하위의 수신함 패널이 이 메인 영역 기준으로 배치되도록 설정 */}
       <main className="flex flex-1 overflow-hidden divide-x divide-white/5 relative">
-        
         {/* 메인 작업 화면 렌더링 영역 */}
         {exclusiveView ? (
           <div className="flex-1 overflow-hidden bg-slate-950">
-            {exclusiveView === 'profile' && <ProfileView user={user} onLogout={onLogout} onUserUpdate={onUserUpdate} />}
-            {exclusiveView === 'workspace-settings' && <WorkspaceSettingsView user={user} onLeaveWorkspace={onLeaveWorkspace} />}
+            {exclusiveView === 'profile' && (
+              <ProfileView
+                user={user}
+                onLogout={onLogout}
+                onUserUpdate={onUserUpdate}
+              />
+            )}
+            {exclusiveView === 'workspace-settings' && (
+              <WorkspaceSettingsView
+                user={user}
+                onLeaveWorkspace={onLeaveWorkspace}
+              />
+            )}
           </div>
         ) : openPanels.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center">
@@ -178,8 +212,10 @@ const WorkspacePage = ({ user, onLogout, onUserUpdate, onLeaveWorkspace, onSwitc
         {isInboxOpen && (
           <div className="absolute top-0 bottom-0 left-0 w-80.1 z-40 flex flex-col border-r border-white/10 bg-slate-900 shadow-[10px_0_30px_rgba(0,0,0,0.6)] animate-slide-right overflow-hidden">
             <div className="p-4 border-b border-white/5 flex justify-between items-center bg-slate-950/40">
-              <span className="text-sm font-semibold text-slate-300">수신함</span>
-              <button 
+              <span className="text-sm font-semibold text-slate-300">
+                수신함
+              </span>
+              <button
                 onClick={() => setIsInboxOpen(false)}
                 className="text-xs text-slate-500 hover:text-white transition"
               >
