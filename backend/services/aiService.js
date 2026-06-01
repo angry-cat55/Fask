@@ -19,7 +19,8 @@ const callTextModel = async (systemPrompt, userPrompt) => {
     }
 };
 
-// JSON 생성용 AI 함수 (칸반 자동 생성 등에 사용)
+// TODO: 칸반 수동/자동 생성 구현할 때 사용할 것
+// JSON 생성용 AI 함수 (칸반 수동/자동 생성 등에 사용)
 const callJsonModel = async (userPrompt, schemaDefinition) => {
     try {
         const { object } = await generateObject({

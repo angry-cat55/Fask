@@ -114,3 +114,18 @@ exports.getMessagesBeforeCursor = async ({ workspaceId, userId, cursor, limit })
     const [rows] = await pool.query(sql, [workspaceId, cursor, limit]);
     return rows;
 };
+
+// 특정 워크스페이스의 마지막 요약 이후에 생성된 새 메시지 조회
+exports.getNewMessagesAfterSummary = async (workspaceId) => {
+    const sql = `
+        SELECT m.message_id AS messageId, u.login_id AS loginId, COALESCE(u.nickname, '알 수 없음') AS nickname, m.content, m.send_at AS sendAt
+        FROM chat_messages m
+        LEFT JOIN users u ON m.user_id = u.user_id
+        WHERE m.workspace_id = ?
+          AND m.message_id > COALESCE((SELECT MAX(end_message_id) FROM ai_summaries WHERE workspace_id = ?), 0)
+        ORDER BY m.send_at ASC
+    `;
+
+    const [rows] = await pool.query(sql, [workspaceId, workspaceId]);
+    return rows;
+};
