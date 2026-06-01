@@ -13,9 +13,9 @@ const callTextModel = async (systemPrompt, userPrompt) => {
     } catch (error) {
         console.error('AI Text API 호출 에러:', error);
 
-        const error = new Error('대화 요약 텍스트 생성에 실패했습니다.');
-        error.statusCode = 500;
-        throw error;
+        const wrappedError = new Error('대화 요약 텍스트 생성에 실패했습니다.');
+        wrappedError.statusCode = 500;
+        throw wrappedError;
     }
 };
 
@@ -32,9 +32,9 @@ const callJsonModel = async (userPrompt, schemaDefinition) => {
     } catch (error) {
         console.error('AI JSON API 호출 에러:', error);
 
-        const error = new Error('자동 칸반 데이터 생성에 실패했습니다.');
-        error.statusCode = 500;
-        throw error;
+        const wrappedError = new Error('자동 칸반 데이터 생성에 실패했습니다.');
+        wrappedError.statusCode = 500;
+        throw wrappedError;
     }
 };
 
