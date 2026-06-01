@@ -110,16 +110,6 @@ const WorkspacePage = ({ user, onLogout, onUserUpdate, onLeaveWorkspace }) => {
     });
   };
 
-  const simulateSocketMessage = () => {
-    const msg = {
-      messageId: Date.now(),
-      nickname: '팀원A',
-      sendAt: new Date().toISOString(),
-      content: '소켓 테스트 메시지입니다!',
-    };
-    socketMessageHandler.current?.(msg);
-  };
-
   const handleSummaryCreated = (summary) => {
     setSummaries((prev) => [...prev, summary]);
   };
@@ -165,16 +155,10 @@ const WorkspacePage = ({ user, onLogout, onUserUpdate, onLeaveWorkspace }) => {
             {exclusiveView === 'workspace-settings' && <WorkspaceSettingsView user={user} onLeaveWorkspace={onLeaveWorkspace} />}
           </div>
         ) : openPanels.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-4">
+          <div className="flex flex-1 flex-col items-center justify-center">
             <p className="text-sm text-slate-600">
               사이드바에서 메뉴를 선택하세요.
             </p>
-            <button
-              onClick={simulateSocketMessage}
-              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-500 hover:text-slate-300 transition"
-            >
-              소켓 메시지 시뮬레이션
-            </button>
           </div>
         ) : (
           /* 기존 컴포넌트들: 수신함이 켜져도 사이즈 변동 없이 그대로 유지됨 */
