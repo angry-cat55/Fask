@@ -85,6 +85,11 @@ const LogoutIcon = () => (
     <line x1="21" y1="12" x2="9" y2="12" />
   </Ico>
 );
+const ChevronDownIcon = () => (
+  <Ico size={13}>
+    <polyline points="6 9 12 15 18 9" />
+  </Ico>
+);
 
 // ── Nav 구조 ────────────────────────────────────────────────────────────────
 const NAV_GROUPS = [
@@ -131,6 +136,7 @@ const Sidebar = ({
   userId,
   workspaceId,
   chatUnread = 0,
+  onSwitchWorkspace,
 }) => {
   const [isMembersOpen, setIsMembersOpen] = useState(false);
   const membersButtonRef = useRef(null);
@@ -149,6 +155,37 @@ const Sidebar = ({
   const [actionTarget, setActionTarget] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [expandedMemberId, setExpandedMemberId] = useState(null);
+
+  const [isWorkspaceSwitcherOpen, setIsWorkspaceSwitcherOpen] = useState(false);
+  const [workspaceList, setWorkspaceList] = useState([]);
+  const workspaceSwitcherRef = useRef(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`/api/workspaces?userId=${userId}`)
+      .then((r) => r.json())
+      .then((result) => {
+        setWorkspaceList(result.data?.workspaces ?? []);
+      })
+      .catch(() => {});
+  }, [userId]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        isWorkspaceSwitcherOpen &&
+        workspaceSwitcherRef.current &&
+        !workspaceSwitcherRef.current.contains(e.target)
+      ) {
+        setIsWorkspaceSwitcherOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isWorkspaceSwitcherOpen]);
+
+  const currentWorkspaceName =
+    workspaceList.find((w) => String(w.workspaceId) === String(workspaceId))?.name ?? '워크스페이스';
 
   const isLeader =
     members.find((m) => String(m.userId) === String(userId))?.role === 'LEADER';
@@ -302,15 +339,65 @@ const Sidebar = ({
   }, [isMembersOpen]);
 
   return (
-    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-white/5 bg-slate-900/60">
-      <div className="flex items-center gap-3 border-b border-white/5 px-4 py-4">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-400/15 text-sm font-black text-cyan-300">
-          F
-        </div>
-        <div>
-          <p className="text-sm font-bold text-white">Fask</p>
-          <p className="text-[10px] text-slate-600">워크스페이스</p>
-        </div>
+    <aside className="relative flex h-full w-56 shrink-0 flex-col border-r border-white/5 bg-slate-900/60">
+      <div ref={workspaceSwitcherRef} className="relative border-b border-white/5">
+        <button
+          type="button"
+          onClick={() => setIsWorkspaceSwitcherOpen((prev) => !prev)}
+          className="flex w-full items-center gap-3 px-4 py-4 hover:bg-white/5 transition"
+        >
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-400/15 text-sm font-black text-cyan-300">
+            F
+          </div>
+          <div className="flex flex-1 flex-col items-start min-w-0">
+            <p className="text-sm font-bold text-white truncate w-full text-left">{currentWorkspaceName}</p>
+            <p className="text-[10px] text-slate-600">워크스페이스</p>
+          </div>
+          <span className={`shrink-0 text-slate-500 transition-transform ${isWorkspaceSwitcherOpen ? 'rotate-180' : ''}`}>
+            <ChevronDownIcon />
+          </span>
+        </button>
+
+        {isWorkspaceSwitcherOpen && (
+          <div className="absolute top-full left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-sm border border-white/10 rounded-b-2xl shadow-[0_16px_40px_rgba(0,0,0,0.5)] overflow-hidden">
+            <p className="px-4 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
+              내 워크스페이스
+            </p>
+
+            <div className="flex flex-col gap-0.5 px-2 pb-2">
+              {workspaceList.length === 0 ? (
+                <p className="px-3 py-2 text-xs text-slate-600">워크스페이스 없음</p>
+              ) : (
+                workspaceList.map((ws) => {
+                  const isCurrent = String(ws.workspaceId) === String(workspaceId);
+                  return (
+                    <button
+                      key={ws.workspaceId}
+                      type="button"
+                      onClick={() => {
+                        if (!isCurrent) onSwitchWorkspace?.(ws.workspaceId);
+                        setIsWorkspaceSwitcherOpen(false);
+                      }}
+                      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition
+                        ${isCurrent
+                          ? 'bg-cyan-500/10 text-white cursor-default'
+                          : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
+                    >
+                      <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold
+                        ${isCurrent ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-800 text-slate-400'}`}>
+                        {ws.name?.[0]?.toUpperCase() ?? 'W'}
+                      </div>
+                      <span className="flex-1 truncate text-left text-xs font-medium">{ws.name}</span>
+                      {isCurrent && (
+                        <span className="shrink-0 h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                      )}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <nav className="sidebar-scroll flex flex-1 flex-col overflow-y-auto px-2 py-3">

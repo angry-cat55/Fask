@@ -22,7 +22,7 @@ const renderPanel = (id, user, chatProps, summaries) => {
 };
 
 // ── WorkspacePage ────────────────────────────────────────────────────────────
-const WorkspacePage = ({ user, onLogout, onUserUpdate, onLeaveWorkspace }) => {
+const WorkspacePage = ({ user, onLogout, onUserUpdate, onLeaveWorkspace, onSwitchWorkspace }) => {
   const [openPanels, setOpenPanels] = useState([]);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
   const [exclusiveView, setExclusiveView] = useState(null);
@@ -143,6 +143,7 @@ const WorkspacePage = ({ user, onLogout, onUserUpdate, onLeaveWorkspace }) => {
         userId={user?.userId}
         workspaceId={user?.workspaceId}
         chatUnread={chatUnread}
+        onSwitchWorkspace={onSwitchWorkspace}
       />
 
       {/* 💡 relative 속성을 주어 하위의 수신함 패널이 이 메인 영역 기준으로 배치되도록 설정 */}
