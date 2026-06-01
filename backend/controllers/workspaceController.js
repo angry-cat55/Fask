@@ -383,7 +383,7 @@ exports.summarizeChatMessages = async (req, res) => {
         return res.status(result.statusCode).json({
             success: true,
             message: result.message,
-            data: { summary: result.data },
+            data: result.data,
         });
     } catch (error) {
         console.error('대화 내용 수동 요약 중 오류:', error);
