@@ -18,13 +18,11 @@ const executeWorkspaceSummary = async (workspaceId, userId) => {
     // DB에서 최신 요약 조회 (summaryId, workspaceId, summaryContent, startMessageId, endMessageId, createdAt)
     const lastSummary = await summaryModel.getLatestSummary(workspaceId);
 
-    // 새 메시지가 없으면 기존 요약 유지
+    // 새 메시지가 없으면 굳이 요약을 새로 만들 필요가 없으므로, 400 에러 반환
     if (!newMessages || newMessages.length === 0) {
-        return {
-            statusCode: 200,
-            message: '새 메시지가 없어 기존 요약을 유지합니다.',
-            data: lastSummary ? lastSummary.summaryContent : '생성된 요약이 없습니다.', // 이전 요약이 없을 때 처리
-        }
+        const error = new Error('새 메시지가 없어 기존 요약을 업데이트할 필요가 없습니다.');
+        error.statusCode = 400;
+        throw error;
     }
 
     // 새 메시지 포맷팅 (예: [닉네임(로그인아이디)](날짜): 메시지 내용)
