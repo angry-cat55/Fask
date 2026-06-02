@@ -135,12 +135,7 @@ const mockApi = {
     };
   },
   summarize: () =>
-    Promise.resolve({
-      success: true,
-      data: {
-        summaryContent: '(Mock) 팀원들이 작업 분배에 대해 논의했습니다.',
-      },
-    }),
+    Promise.resolve({ success: false, message: '워크스페이스 정보가 없어 요약을 생성할 수 없습니다.' }),
 };
 
 const realApi = {
