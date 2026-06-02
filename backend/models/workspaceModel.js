@@ -319,3 +319,36 @@ exports.transferWorkspaceLeader = async ({ workspaceId, currentLeaderId, newLead
         connection.release();
     }
 };
+
+// 해당 워크스페이스의 메세지 조회
+exports.findChatMessageById = async ({ workspaceId, messageId }) => {
+    const sql = `
+        SELECT *
+        FROM chat_messages
+        WHERE workspace_id = ?
+        AND message_id = ?
+    `;
+
+    const [rows] = await pool.query(sql, [
+        workspaceId,
+        messageId,
+    ]);
+
+    return rows[0] || null;
+};
+
+// 마지막으로 읽은 메세지 ID 갱신
+exports.updateLastReadMessage = async ({ workspaceId, userId, lastReadMessageId }) => {
+    const sql = `
+        UPDATE workspace_members
+        SET last_read_message_id = ?
+        WHERE workspace_id = ?
+        AND user_id = ?
+    `;
+
+    await pool.query(sql, [
+        lastReadMessageId,
+        workspaceId,
+        userId,
+    ]);
+};

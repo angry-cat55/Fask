@@ -541,3 +541,50 @@ exports.getWorkspaceMembers = async ({ workspaceId, userId }) => {
 
     return members;
 };
+
+// 확인한 마지막 메세지 ID 갱신 비즈니스 로직
+exports.updateLastReadMessage = async ({ workspaceId, userId, lastReadMessageId }) => {
+    // 1. 워크스페이스 존재 확인
+    const workspace = await workspaceModel.findWorkspaceById(workspaceId);
+
+    if (!workspace) {
+        const error = new Error('해당 워크스페이스를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. 사용자가 해당 워크스페이스 멤버인지 확인
+    const member = await workspaceModel.findWorkspaceMember({
+        workspaceId,
+        userId,
+    });
+
+    if (!member) {
+        const error = new Error('해당 워크스페이스에 참여한 사용자가 아닙니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // 3. lastReadMessageId가 해당 워크스페이스의 메세지인지 확인
+    const message = await workspaceModel.findChatMessageById({
+        workspaceId,
+        messageId: lastReadMessageId,
+    });
+
+    if (!message) {
+        const error = new Error('해당 워크스페이스의 메세지를 찾을 수 없습니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 4. 마지막 읽은 메세지 ID 갱신
+    await workspaceModel.updateLastReadMessage({
+        workspaceId,
+        userId,
+        lastReadMessageId,
+    });
+
+    return {
+        message: '마지막 읽은 메세지 ID가 갱신되었습니다.',
+    };
+};
