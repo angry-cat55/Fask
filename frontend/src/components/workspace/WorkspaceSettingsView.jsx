@@ -34,10 +34,8 @@ const PeriodSelect = ({ value, onChange }) => {
 
 const WorkspaceSettingsView = ({ user, onLeaveWorkspace }) => {
   const [name, setName] = useState('');
-  const [summaryPeriod, setSummaryPeriod] = useState('');
   const [autoTaskPeriod, setAutoTaskPeriod] = useState('');
   const [nameLoading, setNameLoading] = useState(false);
-  const [summaryLoading, setSummaryLoading] = useState(false);
   const [autoTaskLoading, setAutoTaskLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');
@@ -56,15 +54,11 @@ const WorkspaceSettingsView = ({ user, onLeaveWorkspace }) => {
         const res = await fetch(`/api/workspaces?userId=${user.userId}`);
         const result = await res.json();
         const workspaces = result.data?.workspaces ?? [];
-        console.log('[설정] workspaces:', workspaces);
-        console.log('[설정] user.workspaceId:', user.workspaceId);
         const ws = workspaces.find(
           (w) => String(w.workspaceId) === String(user.workspaceId),
         );
-        console.log('[설정] matched ws:', ws);
         if (ws) {
           setName(ws.name ?? '');
-          setSummaryPeriod(ws.summary_period ?? ws.summaryPeriod ?? '');
           setAutoTaskPeriod(ws.auto_task_period ?? ws.autoTaskPeriod ?? '');
         }
       } catch {
@@ -94,7 +88,6 @@ const WorkspaceSettingsView = ({ user, onLeaveWorkspace }) => {
     try {
       const result = await patch({
         name: name.trim(),
-        summary_period: Number(summaryPeriod) || 10,
         auto_task_period: Number(autoTaskPeriod) || 10,
       });
       if (result.success) {
@@ -109,32 +102,11 @@ const WorkspaceSettingsView = ({ user, onLeaveWorkspace }) => {
     }
   };
 
-  const handleSaveSummaryPeriod = async () => {
-    setSummaryLoading(true);
-    try {
-      const result = await patch({
-        name: name.trim() || '워크스페이스',
-        summary_period: Number(summaryPeriod) || 10,
-        auto_task_period: Number(autoTaskPeriod) || 10,
-      });
-      if (result.success) {
-        alert('AI 요약 생성 주기가 저장되었습니다.');
-      } else {
-        alert(result.message || '저장에 실패했습니다.');
-      }
-    } catch {
-      alert('서버 통신 오류가 발생했습니다.');
-    } finally {
-      setSummaryLoading(false);
-    }
-  };
-
   const handleSaveAutoTaskPeriod = async () => {
     setAutoTaskLoading(true);
     try {
       const result = await patch({
         name: name.trim() || '워크스페이스',
-        summary_period: Number(summaryPeriod) || 10,
         auto_task_period: Number(autoTaskPeriod) || 10,
       });
       if (result.success) {
@@ -216,24 +188,9 @@ const WorkspaceSettingsView = ({ user, onLeaveWorkspace }) => {
             </div>
 
             {/* 자동화 설정 */}
-            <div className="rounded-xl border border-white/10 bg-slate-900 divide-y divide-white/5 mb-6">
+            <div className="rounded-xl border border-white/10 bg-slate-900 mb-6">
               <div className="px-5 py-4 flex flex-col gap-3">
                 <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">자동화 설정</p>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-slate-400">AI 요약 생성 주기</label>
-                  <PeriodSelect value={summaryPeriod} onChange={setSummaryPeriod} />
-                  <p className="text-[11px] text-slate-600">채팅 내용을 자동으로 요약하는 주기입니다.</p>
-                </div>
-                <button
-                  onClick={handleSaveSummaryPeriod}
-                  disabled={summaryLoading}
-                  className="self-end rounded-lg bg-cyan-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-cyan-400 disabled:opacity-50 transition"
-                >
-                  {summaryLoading ? '저장 중...' : '저장'}
-                </button>
-              </div>
-
-              <div className="px-5 py-4 flex flex-col gap-3">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs text-slate-400">칸반 생성 주기</label>
                   <PeriodSelect value={autoTaskPeriod} onChange={setAutoTaskPeriod} />

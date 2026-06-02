@@ -40,6 +40,18 @@ const WorkspacePage = ({
   const [firstUnreadMessageId, setFirstUnreadMessageId] = useState(null);
   const [summaries, setSummaries] = useState([]);
 
+  useEffect(() => {
+    const workspaceId = user?.workspaceId;
+    const userId = user?.userId;
+    if (!workspaceId || !userId) return;
+    fetch(`/api/workspaces/${workspaceId}/summaries?userId=${userId}`)
+      .then((r) => r.json())
+      .then((result) => {
+        if (result.success) setSummaries(result.data?.summaries ?? []);
+      })
+      .catch(() => {});
+  }, [user?.workspaceId, user?.userId]);
+
   const socketMessageHandler = useRef(null);
   const socketRef = useRef(null);
 
