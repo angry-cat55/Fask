@@ -394,3 +394,37 @@ exports.summarizeChatMessages = async (req, res) => {
         });
     }
 };
+
+// 확인한 마지막 메세지 ID 갱신 컨트롤러
+exports.updateLastReadMessage = async (req, res) => {
+    try {
+        const { workspaceId } = req.params;
+        const { userId, lastReadMessageId } = req.body;
+
+        if (!workspaceId || !userId || !lastReadMessageId) {
+            return res.status(400).json({
+                success: false,
+                message: '필수 입력값이 누락되었습니다.',
+            });
+        }
+
+        const result = await workspaceService.updateLastReadMessage({
+            workspaceId,
+            userId,
+            lastReadMessageId,
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: result.message,
+        });
+
+    } catch (error) {
+        console.error('마지막 읽은 메세지 ID 갱신 오류:', error);
+
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || '서버 오류가 발생했습니다.',
+        });
+    }
+};
