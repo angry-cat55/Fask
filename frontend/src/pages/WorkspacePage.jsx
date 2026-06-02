@@ -42,15 +42,11 @@ const WorkspacePage = ({
 
   const socketMessageHandler = useRef(null);
   const socketRef = useRef(null);
-  const lastSeenMessageIdRef = useRef(null);
-  const userRef = useRef(user);
-  useEffect(() => { userRef.current = user; }, [user]);
 
   useEffect(() => {
     socketMessageHandler.current = (msg) => {
       if (openPanels.includes('chat')) {
         setLatestSocketMessage(msg);
-        if (msg.messageId) lastSeenMessageIdRef.current = msg.messageId;
       } else {
         setChatUnread((prev) => prev + 1);
         setFirstUnreadMessageId((prev) => prev ?? msg.messageId);
@@ -114,15 +110,6 @@ const WorkspacePage = ({
       const isClosing = openPanels.includes('chat');
       if (isClosing) {
         setFirstUnreadMessageId(null);
-        const lastId = lastSeenMessageIdRef.current;
-        const u = userRef.current;
-        if (lastId && u?.workspaceId && u?.userId) {
-          fetch(`/api/workspaces/${u.workspaceId}/read`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: u.userId, lastReadMessageId: lastId }),
-          }).catch(() => {});
-        }
       } else {
         setChatUnread(0);
       }

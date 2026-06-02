@@ -186,6 +186,28 @@ const ChatView = ({
   const [hasMoreOlder, setHasMoreOlder] = useState(false);
   const [hasMoreNewer, setHasMoreNewer] = useState(false);
   const [sending, setSending] = useState(false);
+  const latestMessageIdRef = useRef(null);
+  const workspaceIdRef = useRef(workspaceId);
+  const userIdRef = useRef(userId);
+  useEffect(() => { workspaceIdRef.current = workspaceId; }, [workspaceId]);
+  useEffect(() => { userIdRef.current = userId; }, [userId]);
+
+  // 채팅 패널 닫힐 때(언마운트) 마지막 읽은 메시지 ID 갱신
+  useEffect(() => {
+    return () => {
+      const lastId = latestMessageIdRef.current;
+      const wId = workspaceIdRef.current;
+      const uId = userIdRef.current;
+      if (!lastId || !wId || !uId) return;
+      fetch(`/api/workspaces/${wId}/read`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: uId, lastReadMessageId: lastId }),
+        keepalive: true,
+      }).catch(() => {});
+    };
+  }, []);
+
   const scrollContainerRef = useRef(null);
   const textareaRef = useRef(null);
   const unreadRef = useRef(null);
@@ -339,6 +361,12 @@ const ChatView = ({
       isCancelled = true;
     };
   }, [workspaceId, userId, api]);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      latestMessageIdRef.current = messages[messages.length - 1].messageId;
+    }
+  }, [messages]);
 
   useLayoutEffect(() => {
     const action = scrollAdjustmentRef.current;
