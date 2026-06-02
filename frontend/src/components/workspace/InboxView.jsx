@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import MessageList from './MessageList.jsx';
 
-const InboxView = ({ user }) => {
+const InboxView = ({ user, onAccepted }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,13 +20,14 @@ const InboxView = ({ user }) => {
       const result = await res.json();
       if (result.success) {
         removeItem(item.workspaceId);
+        onAccepted?.();
       } else {
         alert(result.message || '수락에 실패했습니다.');
       }
     } catch {
       alert('서버 통신 오류가 발생했습니다.');
     }
-  }, [user, removeItem]);
+  }, [user, removeItem, onAccepted]);
 
   const handleReject = useCallback(async (item) => {
     try {
