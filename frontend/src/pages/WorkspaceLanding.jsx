@@ -52,7 +52,6 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout }) => {
         const body = {
           userId: user.userId,
           name: newWorkspace.name,
-          summary_period: 1,
           auto_task_period: 7,
         };
 
