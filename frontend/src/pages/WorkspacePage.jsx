@@ -8,7 +8,7 @@ import SummaryView from '../components/workspace/SummaryView.jsx';
 import ProfileView from '../components/workspace/ProfileView.jsx';
 import WorkspaceSettingsView from '../components/workspace/WorkspaceSettingsView.jsx';
 
-const renderPanel = (id, user, chatProps, summaries) => {
+const renderPanel = (id, user, chatProps, summary) => {
   switch (id) {
     case 'chat':
       return <ChatView {...chatProps} />;
@@ -17,7 +17,7 @@ const renderPanel = (id, user, chatProps, summaries) => {
         <KanbanBoard userId={user?.userId} workspaceId={user?.workspaceId} />
       );
     case 'summary':
-      return <SummaryView summaries={summaries} />;
+      return <SummaryView summary={summary} />;
     default:
       return null;
   }
@@ -38,17 +38,17 @@ const WorkspacePage = ({
   const [chatUnread, setChatUnread] = useState(0);
   const [latestSocketMessage, setLatestSocketMessage] = useState(null);
   const [firstUnreadMessageId, setFirstUnreadMessageId] = useState(null);
-  const [summaries, setSummaries] = useState([]);
+  const [summary, setSummary] = useState(null);
   const [workspaceRefreshToken, setWorkspaceRefreshToken] = useState(0);
 
   useEffect(() => {
     const workspaceId = user?.workspaceId;
     const userId = user?.userId;
     if (!workspaceId || !userId) return;
-    fetch(`/api/workspaces/${workspaceId}/summaries?userId=${userId}`)
+    fetch(`/api/workspaces/${workspaceId}/messages/summary?userId=${userId}`)
       .then((r) => r.json())
       .then((result) => {
-        if (result.success) setSummaries(result.data?.summaries ?? []);
+        if (result.success) setSummary(result.data ?? null);
       })
       .catch(() => {});
   }, [user?.workspaceId, user?.userId]);
@@ -147,8 +147,8 @@ const WorkspacePage = ({
     });
   };
 
-  const handleSummaryCreated = (summary) => {
-    setSummaries((prev) => [...prev, summary]);
+  const handleSummaryCreated = (newSummary) => {
+    setSummary(newSummary);
   };
 
   const chatProps = {
@@ -221,7 +221,7 @@ const WorkspacePage = ({
               key={id}
               className={`flex flex-col overflow-hidden ${id === 'chat' ? 'flex-1' : 'flex-2'}`}
             >
-              {renderPanel(id, user, chatProps, summaries)}
+              {renderPanel(id, user, chatProps, summary)}
             </div>
           ))
         )}

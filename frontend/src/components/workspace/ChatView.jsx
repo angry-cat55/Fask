@@ -181,6 +181,7 @@ const ChatView = ({
   const [hasMoreOlder, setHasMoreOlder] = useState(false);
   const [hasMoreNewer, setHasMoreNewer] = useState(false);
   const [sending, setSending] = useState(false);
+  const [summarizing, setSummarizing] = useState(false);
   const latestMessageIdRef = useRef(null);
   const workspaceIdRef = useRef(workspaceId);
   const userIdRef = useRef(userId);
@@ -506,17 +507,21 @@ const ChatView = ({
   };
 
   const handleSummarize = async () => {
+    setSummarizing(true);
     try {
       const result = await (workspaceId
         ? api.summarize(workspaceId, userId)
         : api.summarize());
       if (result.success) {
         onSummaryCreated?.(result.data);
+        alert('요약 생성이 완료되었습니다.');
       } else {
         alert(result.message || '요약 생성에 실패했습니다.');
       }
     } catch (err) {
       console.error('요약 오류:', err);
+    } finally {
+      setSummarizing(false);
     }
   };
 
@@ -540,9 +545,10 @@ const ChatView = ({
         </div>
         <button
           onClick={handleSummarize}
-          className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-400 transition hover:border-white/20 hover:text-white"
+          disabled={summarizing}
+          className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-400 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
-          요약 생성
+          {summarizing ? '생성 중...' : '요약 생성'}
         </button>
       </div>
 
