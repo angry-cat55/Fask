@@ -37,7 +37,7 @@ const SummaryView = ({ summaries = [] }) => (
           >
             <div className="flex items-center justify-between">
               <span className="text-xs text-cyan-400/70">
-                {fmt(s.summaryStartAt)} ~ {fmt(s.summaryEndAt)}
+                #{s.startMessageId} ~ #{s.endMessageId}
               </span>
               <span className="text-xs text-slate-600">{fmt(s.createdAt)}</span>
             </div>
