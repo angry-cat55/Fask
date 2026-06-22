@@ -135,8 +135,10 @@ const Sidebar = ({
   onLogout,
   userId,
   workspaceId,
+  workspaceName,
   chatUnread = 0,
   onSwitchWorkspace,
+  workspaceRefreshToken = 0,
 }) => {
   const [isMembersOpen, setIsMembersOpen] = useState(false);
   const membersButtonRef = useRef(null);
@@ -168,7 +170,7 @@ const Sidebar = ({
         setWorkspaceList(result.data?.workspaces ?? []);
       })
       .catch(() => {});
-  }, [userId]);
+  }, [userId, workspaceRefreshToken]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -185,7 +187,10 @@ const Sidebar = ({
   }, [isWorkspaceSwitcherOpen]);
 
   const currentWorkspaceName =
-    workspaceList.find((w) => String(w.workspaceId) === String(workspaceId))?.name ?? '워크스페이스';
+    workspaceName ??
+    workspaceList.find((w) => String(w.workspaceId) === String(workspaceId))
+      ?.name ??
+    '워크스페이스';
 
   const isLeader =
     members.find((m) => String(m.userId) === String(userId))?.role === 'LEADER';
@@ -219,7 +224,10 @@ const Sidebar = ({
       const res = await fetch(`/api/workspaces/${workspaceId}/owner`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, newOwnerId: actionTarget.member.userId }),
+        body: JSON.stringify({
+          userId,
+          newOwnerId: actionTarget.member.userId,
+        }),
       });
       const result = await res.json();
       if (result.success) {
@@ -296,7 +304,10 @@ const Sidebar = ({
       setIsMembersOpen((prev) => {
         const next = !prev;
         if (next) setInviteTouched(false);
-        if (!next) { setInviteUserId(''); setInviteTouched(false); }
+        if (!next) {
+          setInviteUserId('');
+          setInviteTouched(false);
+        }
         return next;
       });
       return;
@@ -340,7 +351,10 @@ const Sidebar = ({
 
   return (
     <aside className="relative flex h-full w-56 shrink-0 flex-col border-r border-white/5 bg-slate-900/60">
-      <div ref={workspaceSwitcherRef} className="relative border-b border-white/5">
+      <div
+        ref={workspaceSwitcherRef}
+        className="relative border-b border-white/5"
+      >
         <button
           type="button"
           onClick={() => setIsWorkspaceSwitcherOpen((prev) => !prev)}
@@ -350,10 +364,14 @@ const Sidebar = ({
             F
           </div>
           <div className="flex flex-1 flex-col items-start min-w-0">
-            <p className="text-sm font-bold text-white truncate w-full text-left">{currentWorkspaceName}</p>
+            <p className="text-sm font-bold text-white truncate w-full text-left">
+              {currentWorkspaceName}
+            </p>
             <p className="text-[10px] text-slate-600">워크스페이스</p>
           </div>
-          <span className={`shrink-0 text-slate-500 transition-transform ${isWorkspaceSwitcherOpen ? 'rotate-180' : ''}`}>
+          <span
+            className={`shrink-0 text-slate-500 transition-transform ${isWorkspaceSwitcherOpen ? 'rotate-180' : ''}`}
+          >
             <ChevronDownIcon />
           </span>
         </button>
@@ -366,10 +384,13 @@ const Sidebar = ({
 
             <div className="flex flex-col gap-0.5 px-2 pb-2">
               {workspaceList.length === 0 ? (
-                <p className="px-3 py-2 text-xs text-slate-600">워크스페이스 없음</p>
+                <p className="px-3 py-2 text-xs text-slate-600">
+                  워크스페이스 없음
+                </p>
               ) : (
                 workspaceList.map((ws) => {
-                  const isCurrent = String(ws.workspaceId) === String(workspaceId);
+                  const isCurrent =
+                    String(ws.workspaceId) === String(workspaceId);
                   return (
                     <button
                       key={ws.workspaceId}
@@ -379,15 +400,21 @@ const Sidebar = ({
                         setIsWorkspaceSwitcherOpen(false);
                       }}
                       className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition
-                        ${isCurrent
-                          ? 'bg-cyan-500/10 text-white cursor-default'
-                          : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
+                        ${
+                          isCurrent
+                            ? 'bg-cyan-500/10 text-white cursor-default'
+                            : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                        }`}
                     >
-                      <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold
-                        ${isCurrent ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-800 text-slate-400'}`}>
+                      <div
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold
+                        ${isCurrent ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-800 text-slate-400'}`}
+                      >
                         {ws.name?.[0]?.toUpperCase() ?? 'W'}
                       </div>
-                      <span className="flex-1 truncate text-left text-xs font-medium">{ws.name}</span>
+                      <span className="flex-1 truncate text-left text-xs font-medium">
+                        {ws.name}
+                      </span>
                       {isCurrent && (
                         <span className="shrink-0 h-1.5 w-1.5 rounded-full bg-cyan-400" />
                       )}
@@ -416,7 +443,13 @@ const Sidebar = ({
               return (
                 <React.Fragment key={item.id}>
                   <button
-                    ref={item.id === 'members' ? membersButtonRef : item.id === 'member-list' ? memberListButtonRef : null}
+                    ref={
+                      item.id === 'members'
+                        ? membersButtonRef
+                        : item.id === 'member-list'
+                          ? memberListButtonRef
+                          : null
+                    }
                     type="button"
                     onClick={() => handleSelect(item.id)}
                     className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition ${
@@ -441,147 +474,189 @@ const Sidebar = ({
                   </button>
 
                   {item.id === 'member-list' && isMemberListOpen && (
-                      <div
-                        ref={memberListPanelRef}
-                        className="mt-2 ml-1 rounded-2xl border border-white/10 bg-slate-950/60 p-3 shadow-lg shadow-black/10"
-                      >
-                        <div className="flex items-center justify-between mb-2.5">
-                          <span className="text-sm font-semibold text-white">멤버 목록</span>
-                          <button
-                            onClick={fetchMembers}
-                            disabled={membersLoading}
-                            title="새로고침"
-                            className={`text-slate-500 hover:text-slate-300 transition disabled:opacity-40 ${membersLoading ? 'animate-spin' : ''}`}
-                          >
-                            <RefreshIcon />
-                          </button>
-                        </div>
+                    <div
+                      ref={memberListPanelRef}
+                      className="mt-2 ml-1 rounded-2xl border border-white/10 bg-slate-950/60 p-3 shadow-lg shadow-black/10"
+                    >
+                      <div className="flex items-center justify-between mb-2.5">
+                        <span className="text-sm font-semibold text-white">
+                          멤버 목록
+                        </span>
+                        <button
+                          onClick={fetchMembers}
+                          disabled={membersLoading}
+                          title="새로고침"
+                          className={`text-slate-500 hover:text-slate-300 transition disabled:opacity-40 ${membersLoading ? 'animate-spin' : ''}`}
+                        >
+                          <RefreshIcon />
+                        </button>
+                      </div>
 
-                        {membersLoading ? (
-                          <p className="py-3 text-center text-xs text-slate-600">불러오는 중...</p>
-                        ) : membersError ? (
-                          <p className="py-2 text-center text-xs text-red-400">{membersError}</p>
-                        ) : (
-                          <div className="flex flex-col gap-1 max-h-52 overflow-y-auto">
-                            {members.map((member) => {
-                              const isSelf = String(member.userId) === String(userId);
-                              const isExpanded = expandedMemberId === member.userId;
-                              const isActive = actionTarget?.member?.userId === member.userId;
-                              const isTransferConfirm = isActive && actionTarget.type === 'transfer';
-                              const isKickConfirm = isActive && actionTarget.type === 'kick';
-                              const clickable = isLeader && !isSelf && member.role !== 'LEADER';
+                      {membersLoading ? (
+                        <p className="py-3 text-center text-xs text-slate-600">
+                          불러오는 중...
+                        </p>
+                      ) : membersError ? (
+                        <p className="py-2 text-center text-xs text-red-400">
+                          {membersError}
+                        </p>
+                      ) : (
+                        <div className="flex flex-col gap-1 max-h-52 overflow-y-auto">
+                          {members.map((member) => {
+                            const isSelf =
+                              String(member.userId) === String(userId);
+                            const isExpanded =
+                              expandedMemberId === member.userId;
+                            const isActive =
+                              actionTarget?.member?.userId === member.userId;
+                            const isTransferConfirm =
+                              isActive && actionTarget.type === 'transfer';
+                            const isKickConfirm =
+                              isActive && actionTarget.type === 'kick';
+                            const clickable =
+                              isLeader && !isSelf && member.role !== 'LEADER';
 
-                              return (
-                                <div
-                                  key={member.userId}
-                                  onClick={() => {
-                                    if (!clickable || isActive) return;
-                                    setExpandedMemberId((prev) =>
-                                      prev === member.userId ? null : member.userId
-                                    );
-                                  }}
-                                  className={`rounded-lg bg-slate-800/40 px-2.5 py-2 ${clickable && !isActive ? 'cursor-pointer hover:bg-slate-700/50 transition' : ''}`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-700 text-[10px] font-bold text-slate-300">
-                                      {member.nickname[0].toUpperCase()}
-                                    </div>
-                                    <div className="flex flex-1 flex-col min-w-0">
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-xs font-medium text-white truncate">
-                                          {member.nickname}
-                                        </span>
-                                        {isSelf && (
-                                          <span className="text-[9px] text-slate-600">(나)</span>
-                                        )}
-                                      </div>
-                                      <span className="text-[10px] text-slate-500 truncate">
-                                        @{member.loginId}
+                            return (
+                              <div
+                                key={member.userId}
+                                onClick={() => {
+                                  if (!clickable || isActive) return;
+                                  setExpandedMemberId((prev) =>
+                                    prev === member.userId
+                                      ? null
+                                      : member.userId,
+                                  );
+                                }}
+                                className={`rounded-lg bg-slate-800/40 px-2.5 py-2 ${clickable && !isActive ? 'cursor-pointer hover:bg-slate-700/50 transition' : ''}`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-700 text-[10px] font-bold text-slate-300">
+                                    {member.nickname[0].toUpperCase()}
+                                  </div>
+                                  <div className="flex flex-1 flex-col min-w-0">
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-xs font-medium text-white truncate">
+                                        {member.nickname}
                                       </span>
+                                      {isSelf && (
+                                        <span className="text-[9px] text-slate-600">
+                                          (나)
+                                        </span>
+                                      )}
                                     </div>
-                                    <span className={`shrink-0 text-[10px] font-semibold ${member.role === 'LEADER' ? 'text-cyan-400' : 'text-slate-600'}`}>
-                                      {member.role === 'LEADER' ? '방장' : '멤버'}
+                                    <span className="text-[10px] text-slate-500 truncate">
+                                      @{member.loginId}
                                     </span>
                                   </div>
-
-                                  {isExpanded && !isActive && (
-                                    <div className="mt-2 flex gap-1.5 border-t border-white/5 pt-2">
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setExpandedMemberId(null);
-                                          setActionTarget({ member, type: 'transfer' });
-                                        }}
-                                        className="flex-1 rounded border border-white/10 py-1 text-[10px] text-slate-300 hover:bg-white/5 transition"
-                                      >
-                                        방장 위임
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setExpandedMemberId(null);
-                                          setActionTarget({ member, type: 'kick' });
-                                        }}
-                                        className="flex-1 rounded border border-red-500/20 py-1 text-[10px] text-red-400/70 hover:text-red-400 hover:bg-red-500/5 transition"
-                                      >
-                                        강제 퇴장
-                                      </button>
-                                    </div>
-                                  )}
-
-                                  {isTransferConfirm && (
-                                    <div className="mt-2 border-t border-white/5 pt-2">
-                                      <p className="mb-1.5 text-[10px] text-amber-300">
-                                        <span className="font-semibold">{member.nickname}</span>님에게 방장을 위임할까요?
-                                      </p>
-                                      <div className="flex gap-1.5">
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); handleTransfer(); }}
-                                          disabled={actionLoading}
-                                          className="flex-1 rounded bg-amber-500 py-1 text-[10px] font-medium text-white hover:bg-amber-400 disabled:opacity-50 transition"
-                                        >
-                                          {actionLoading ? '처리중...' : '위임'}
-                                        </button>
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); setActionTarget(null); }}
-                                          disabled={actionLoading}
-                                          className="flex-1 rounded border border-white/10 py-1 text-[10px] text-slate-400 hover:text-white transition"
-                                        >
-                                          취소
-                                        </button>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {isKickConfirm && (
-                                    <div className="mt-2 border-t border-white/5 pt-2">
-                                      <p className="mb-1.5 text-[10px] text-red-300">
-                                        <span className="font-semibold">{member.nickname}</span>님을 강제 퇴장시킬까요?
-                                      </p>
-                                      <div className="flex gap-1.5">
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); handleKick(); }}
-                                          disabled={actionLoading}
-                                          className="flex-1 rounded bg-red-500 py-1 text-[10px] font-medium text-white hover:bg-red-400 disabled:opacity-50 transition"
-                                        >
-                                          {actionLoading ? '처리중...' : '강퇴'}
-                                        </button>
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); setActionTarget(null); }}
-                                          disabled={actionLoading}
-                                          className="flex-1 rounded border border-white/10 py-1 text-[10px] text-slate-400 hover:text-white transition"
-                                        >
-                                          취소
-                                        </button>
-                                      </div>
-                                    </div>
-                                  )}
+                                  <span
+                                    className={`shrink-0 text-[10px] font-semibold ${member.role === 'LEADER' ? 'text-cyan-400' : 'text-slate-600'}`}
+                                  >
+                                    {member.role === 'LEADER' ? '방장' : '멤버'}
+                                  </span>
                                 </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
+
+                                {isExpanded && !isActive && (
+                                  <div className="mt-2 flex gap-1.5 border-t border-white/5 pt-2">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setExpandedMemberId(null);
+                                        setActionTarget({
+                                          member,
+                                          type: 'transfer',
+                                        });
+                                      }}
+                                      className="flex-1 rounded border border-white/10 py-1 text-[10px] text-slate-300 hover:bg-white/5 transition"
+                                    >
+                                      방장 위임
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setExpandedMemberId(null);
+                                        setActionTarget({
+                                          member,
+                                          type: 'kick',
+                                        });
+                                      }}
+                                      className="flex-1 rounded border border-red-500/20 py-1 text-[10px] text-red-400/70 hover:text-red-400 hover:bg-red-500/5 transition"
+                                    >
+                                      강제 퇴장
+                                    </button>
+                                  </div>
+                                )}
+
+                                {isTransferConfirm && (
+                                  <div className="mt-2 border-t border-white/5 pt-2">
+                                    <p className="mb-1.5 text-[10px] text-amber-300">
+                                      <span className="font-semibold">
+                                        {member.nickname}
+                                      </span>
+                                      님에게 방장을 위임할까요?
+                                    </p>
+                                    <div className="flex gap-1.5">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleTransfer();
+                                        }}
+                                        disabled={actionLoading}
+                                        className="flex-1 rounded bg-amber-500 py-1 text-[10px] font-medium text-white hover:bg-amber-400 disabled:opacity-50 transition"
+                                      >
+                                        {actionLoading ? '처리중...' : '위임'}
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setActionTarget(null);
+                                        }}
+                                        disabled={actionLoading}
+                                        className="flex-1 rounded border border-white/10 py-1 text-[10px] text-slate-400 hover:text-white transition"
+                                      >
+                                        취소
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {isKickConfirm && (
+                                  <div className="mt-2 border-t border-white/5 pt-2">
+                                    <p className="mb-1.5 text-[10px] text-red-300">
+                                      <span className="font-semibold">
+                                        {member.nickname}
+                                      </span>
+                                      님을 강제 퇴장시킬까요?
+                                    </p>
+                                    <div className="flex gap-1.5">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleKick();
+                                        }}
+                                        disabled={actionLoading}
+                                        className="flex-1 rounded bg-red-500 py-1 text-[10px] font-medium text-white hover:bg-red-400 disabled:opacity-50 transition"
+                                      >
+                                        {actionLoading ? '처리중...' : '강퇴'}
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setActionTarget(null);
+                                        }}
+                                        disabled={actionLoading}
+                                        className="flex-1 rounded border border-white/10 py-1 text-[10px] text-slate-400 hover:text-white transition"
+                                      >
+                                        취소
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {item.id === 'members' && isMembersOpen && (
