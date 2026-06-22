@@ -49,10 +49,14 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout }) => {
 
       setCreating(true);
       try {
+        const summaryPeriod = Number(newWorkspace.summary_period) || 2;
+        const autoTaskPeriod = Number(newWorkspace.auto_task_period) || 5;
+
         const body = {
           userId: user.userId,
           name: newWorkspace.name,
-          auto_task_period: 7,
+          summary_period: summaryPeriod,
+          auto_task_period: autoTaskPeriod,
         };
 
         const res = await fetch('/api/workspaces', {
@@ -93,7 +97,9 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout }) => {
           <div className="flex items-center justify-between border-b border-white/5 px-5 py-4">
             <div>
               <h2 className="text-sm font-semibold text-white">수신함</h2>
-              <p className="text-[11px] text-slate-500 mt-0.5">받은 초대 목록</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                받은 초대 목록
+              </p>
             </div>
             <button
               onClick={() => setIsInboxOpen(false)}
@@ -121,9 +127,11 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout }) => {
             <button
               onClick={() => setIsInboxOpen((prev) => !prev)}
               className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition
-                ${isInboxOpen
-                  ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-400'
-                  : 'border-white/10 text-slate-400 hover:text-white hover:border-white/20'}`}
+                ${
+                  isInboxOpen
+                    ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-400'
+                    : 'border-white/10 text-slate-400 hover:text-white hover:border-white/20'
+                }`}
             >
               수신함
             </button>
@@ -153,7 +161,10 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout }) => {
                 워크스페이스를 불러오지 못했습니다.
               </div>
             ) : (
-              <WorkspaceList items={items} onEnterWorkspace={onEnterWorkspace} />
+              <WorkspaceList
+                items={items}
+                onEnterWorkspace={onEnterWorkspace}
+              />
             )}
           </section>
         </div>

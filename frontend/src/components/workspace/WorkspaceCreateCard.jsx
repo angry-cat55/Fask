@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
+import PeriodSelect from './PeriodSelect.jsx';
 
 const WorkspaceCreateCard = ({
   onCreate,
   loading: externalLoading = false,
 }) => {
   const [name, setName] = useState('');
+  const [summaryPeriod, setSummaryPeriod] = useState('2');
+  const [autoTaskPeriod, setAutoTaskPeriod] = useState('5');
   const [loading, setLoading] = useState(false);
 
   const handleCreate = async () => {
     if (!name.trim()) return;
-    const payload = { name: name.trim() };
+    const payload = {
+      name: name.trim(),
+      summary_period: Number(summaryPeriod) || 2,
+      auto_task_period: Number(autoTaskPeriod) || 5,
+    };
     const result = onCreate?.(payload);
 
     // if parent returned a promise, await it and show local loading
@@ -49,6 +56,17 @@ const WorkspaceCreateCard = ({
         >
           {externalLoading || loading ? '생성 중...' : '생성'}
         </button>
+      </div>
+
+      <div className="mt-6 grid gap-4 text-left sm:grid-cols-2">
+        <label className="flex flex-col gap-2 text-xs text-slate-400">
+          <span>요약 생성 주기</span>
+          <PeriodSelect value={summaryPeriod} onChange={setSummaryPeriod} />
+        </label>
+        <label className="flex flex-col gap-2 text-xs text-slate-400">
+          <span>태스크 자동 생성 주기</span>
+          <PeriodSelect value={autoTaskPeriod} onChange={setAutoTaskPeriod} />
+        </label>
       </div>
     </div>
   );
