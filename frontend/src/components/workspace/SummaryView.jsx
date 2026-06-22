@@ -1,4 +1,34 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+
+const markdownComponents = {
+  p: ({ children }) => (
+    <p className="text-sm text-white leading-relaxed">{children}</p>
+  ),
+  strong: ({ children }) => (
+    <strong className="font-semibold text-cyan-300">{children}</strong>
+  ),
+  ul: ({ children }) => (
+    <ul className="list-disc pl-4 text-sm text-white leading-relaxed">
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="list-decimal pl-4 text-sm text-white leading-relaxed">
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => <li className="mb-1">{children}</li>,
+  h1: ({ children }) => (
+    <h1 className="text-base font-bold text-white">{children}</h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="text-sm font-bold text-white">{children}</h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-sm font-semibold text-white">{children}</h3>
+  ),
+};
 
 const fmt = (iso) => {
   if (!iso) return '';
@@ -41,7 +71,9 @@ const SummaryView = ({ summaries = [] }) => (
               </span>
               <span className="text-xs text-slate-600">{fmt(s.createdAt)}</span>
             </div>
-            <p className="text-sm text-white leading-relaxed">{s.summaryContent}</p>
+            <ReactMarkdown components={markdownComponents}>
+              {s.summaryContent}
+            </ReactMarkdown>
           </div>
         ))
       )}
