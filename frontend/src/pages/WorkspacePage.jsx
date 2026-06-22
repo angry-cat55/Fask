@@ -39,6 +39,7 @@ const WorkspacePage = ({
   const [latestSocketMessage, setLatestSocketMessage] = useState(null);
   const [firstUnreadMessageId, setFirstUnreadMessageId] = useState(null);
   const [summaries, setSummaries] = useState([]);
+  const [workspaceRefreshToken, setWorkspaceRefreshToken] = useState(0);
 
   useEffect(() => {
     const workspaceId = user?.workspaceId;
@@ -65,7 +66,6 @@ const WorkspacePage = ({
       }
     };
   }, [openPanels]);
-
 
   useEffect(() => {
     const workspaceId = user?.workspaceId;
@@ -179,8 +179,10 @@ const WorkspacePage = ({
         onLogout={onLogout}
         userId={user?.userId}
         workspaceId={user?.workspaceId}
+        workspaceName={user?.workspaceName}
         chatUnread={chatUnread}
         onSwitchWorkspace={onSwitchWorkspace}
+        workspaceRefreshToken={workspaceRefreshToken}
       />
 
       {/* 💡 relative 속성을 주어 하위의 수신함 패널이 이 메인 영역 기준으로 배치되도록 설정 */}
@@ -199,6 +201,10 @@ const WorkspacePage = ({
               <WorkspaceSettingsView
                 user={user}
                 onLeaveWorkspace={onLeaveWorkspace}
+                onUserUpdate={onUserUpdate}
+                onWorkspaceSaved={() =>
+                  setWorkspaceRefreshToken((prev) => prev + 1)
+                }
               />
             )}
           </div>

@@ -1,39 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import PeriodSelect from './PeriodSelect.jsx';
 
-const PERIOD_OPTIONS = [
-  { label: '10분',  value: 10 },
-  { label: '20분',  value: 20 },
-  { label: '30분',  value: 30 },
-  { label: '40분',  value: 40 },
-  { label: '50분',  value: 50 },
-  { label: '1시간',  value: 60 },
-  { label: '2시간',  value: 120 },
-  { label: '3시간',  value: 180 },
-  { label: '4시간',  value: 240 },
-  { label: '6시간',  value: 360 },
-  { label: '8시간',  value: 480 },
-  { label: '12시간', value: 720 },
-  { label: '24시간', value: 1440 },
-];
+const DEFAULT_SUMMARY_PERIOD = 2;
+const DEFAULT_AUTO_TASK_PERIOD = 5;
 
-const PeriodSelect = ({ value, onChange }) => {
-  const matched = PERIOD_OPTIONS.some((opt) => String(opt.value) === String(value));
-  const effectiveValue = matched ? String(value) : String(PERIOD_OPTIONS[0].value);
-  return (
-    <select
-      value={effectiveValue}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500 transition cursor-pointer"
-    >
-      {PERIOD_OPTIONS.map((opt) => (
-        <option key={opt.value} value={String(opt.value)}>{opt.label}</option>
-      ))}
-    </select>
-  );
-};
-
-const WorkspaceSettingsView = ({ user, onLeaveWorkspace }) => {
+const WorkspaceSettingsView = ({
+  user,
+  onLeaveWorkspace,
+  onUserUpdate,
+  onWorkspaceSaved,
+}) => {
   const [name, setName] = useState('');
+  const [summaryPeriod, setSummaryPeriod] = useState(
+    String(DEFAULT_SUMMARY_PERIOD),
+  );
   const [autoTaskPeriod, setAutoTaskPeriod] = useState('');
   const [nameLoading, setNameLoading] = useState(false);
   const [autoTaskLoading, setAutoTaskLoading] = useState(false);
@@ -50,6 +30,21 @@ const WorkspaceSettingsView = ({ user, onLeaveWorkspace }) => {
       }
       setFetchLoading(true);
       setFetchError('');
+
+      setName(user?.workspaceName ?? '');
+      setSummaryPeriod(
+        String(
+          user?.summary_period ?? user?.summaryPeriod ?? DEFAULT_SUMMARY_PERIOD,
+        ),
+      );
+      setAutoTaskPeriod(
+        String(
+          user?.auto_task_period ??
+            user?.autoTaskPeriod ??
+            DEFAULT_AUTO_TASK_PERIOD,
+        ),
+      );
+
       try {
         const res = await fetch(`/api/workspaces?userId=${user.userId}`);
         const result = await res.json();
@@ -59,7 +54,16 @@ const WorkspaceSettingsView = ({ user, onLeaveWorkspace }) => {
         );
         if (ws) {
           setName(ws.name ?? '');
-          setAutoTaskPeriod(ws.auto_task_period ?? ws.autoTaskPeriod ?? '');
+          const nextSummaryPeriod = ws.summary_period ?? ws.summaryPeriod;
+          const nextAutoTaskPeriod = ws.auto_task_period ?? ws.autoTaskPeriod;
+
+          if (nextSummaryPeriod != null) {
+            setSummaryPeriod(String(nextSummaryPeriod));
+          }
+
+          if (nextAutoTaskPeriod != null) {
+            setAutoTaskPeriod(String(nextAutoTaskPeriod));
+          }
         }
       } catch {
         setFetchError('서버 통신 오류가 발생했습니다.');
@@ -88,9 +92,17 @@ const WorkspaceSettingsView = ({ user, onLeaveWorkspace }) => {
     try {
       const result = await patch({
         name: name.trim(),
-        auto_task_period: Number(autoTaskPeriod) || 10,
+        summary_period: Number(summaryPeriod) || DEFAULT_SUMMARY_PERIOD,
+        auto_task_period: Number(autoTaskPeriod) || DEFAULT_AUTO_TASK_PERIOD,
       });
       if (result.success) {
+        onUserUpdate?.({
+          ...user,
+          workspaceName: name.trim(),
+          summary_period: Number(summaryPeriod) || DEFAULT_SUMMARY_PERIOD,
+          auto_task_period: Number(autoTaskPeriod) || DEFAULT_AUTO_TASK_PERIOD,
+        });
+        onWorkspaceSaved?.();
         alert('이름이 저장되었습니다.');
       } else {
         alert(result.message || '저장에 실패했습니다.');
@@ -107,9 +119,17 @@ const WorkspaceSettingsView = ({ user, onLeaveWorkspace }) => {
     try {
       const result = await patch({
         name: name.trim() || '워크스페이스',
-        auto_task_period: Number(autoTaskPeriod) || 10,
+        summary_period: Number(summaryPeriod) || DEFAULT_SUMMARY_PERIOD,
+        auto_task_period: Number(autoTaskPeriod) || DEFAULT_AUTO_TASK_PERIOD,
       });
       if (result.success) {
+        onUserUpdate?.({
+          ...user,
+          workspaceName: name.trim() || '워크스페이스',
+          summary_period: Number(summaryPeriod) || DEFAULT_SUMMARY_PERIOD,
+          auto_task_period: Number(autoTaskPeriod) || DEFAULT_AUTO_TASK_PERIOD,
+        });
+        onWorkspaceSaved?.();
         alert('칸반 생성 주기가 저장되었습니다.');
       } else {
         alert(result.message || '저장에 실패했습니다.');
@@ -154,7 +174,9 @@ const WorkspaceSettingsView = ({ user, onLeaveWorkspace }) => {
   return (
     <div className="flex flex-col items-center justify-start min-h-full p-8 overflow-y-auto bg-slate-950">
       <div className="w-full max-w-lg">
-        <h2 className="text-2xl font-bold text-white mb-8">워크스페이스 설정</h2>
+        <h2 className="text-2xl font-bold text-white mb-8">
+          워크스페이스 설정
+        </h2>
 
         {fetchLoading ? (
           <p className="text-sm text-slate-600">불러오는 중...</p>
@@ -165,9 +187,13 @@ const WorkspaceSettingsView = ({ user, onLeaveWorkspace }) => {
             {/* 기본 정보 */}
             <div className="rounded-xl border border-white/10 bg-slate-900 mb-4">
               <div className="px-5 py-4 flex flex-col gap-3">
-                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">기본 정보</p>
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                  기본 정보
+                </p>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-slate-400">워크스페이스 이름</label>
+                  <label className="text-xs text-slate-400">
+                    워크스페이스 이름
+                  </label>
                   <input
                     type="text"
                     value={name}
@@ -187,14 +213,44 @@ const WorkspaceSettingsView = ({ user, onLeaveWorkspace }) => {
               </div>
             </div>
 
+            {/* 요약 설정 */}
+            <div className="rounded-xl border border-white/10 bg-slate-900 mb-4">
+              <div className="px-5 py-4 flex flex-col gap-3">
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                  요약 설정
+                </p>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-slate-400">
+                    요약 생성 주기
+                  </label>
+                  <PeriodSelect
+                    value={summaryPeriod}
+                    onChange={setSummaryPeriod}
+                  />
+                  <p className="text-[11px] text-slate-600">
+                    대화 내용을 자동 요약할 기준 주기입니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* 자동화 설정 */}
             <div className="rounded-xl border border-white/10 bg-slate-900 mb-6">
               <div className="px-5 py-4 flex flex-col gap-3">
-                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">자동화 설정</p>
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                  자동화 설정
+                </p>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-slate-400">칸반 생성 주기</label>
-                  <PeriodSelect value={autoTaskPeriod} onChange={setAutoTaskPeriod} />
-                  <p className="text-[11px] text-slate-600">요약을 기반으로 태스크를 자동 생성하는 주기입니다.</p>
+                  <label className="text-xs text-slate-400">
+                    칸반 생성 주기
+                  </label>
+                  <PeriodSelect
+                    value={autoTaskPeriod}
+                    onChange={setAutoTaskPeriod}
+                  />
+                  <p className="text-[11px] text-slate-600">
+                    요약을 기반으로 태스크를 자동 생성하는 주기입니다.
+                  </p>
                 </div>
                 <button
                   onClick={handleSaveAutoTaskPeriod}
@@ -216,8 +272,12 @@ const WorkspaceSettingsView = ({ user, onLeaveWorkspace }) => {
               </button>
             ) : (
               <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-5 flex flex-col gap-4">
-                <p className="text-sm text-red-300 font-medium">정말로 워크스페이스를 삭제하시겠습니까?</p>
-                <p className="text-xs text-slate-500">삭제된 워크스페이스와 모든 데이터는 복구할 수 없습니다.</p>
+                <p className="text-sm text-red-300 font-medium">
+                  정말로 워크스페이스를 삭제하시겠습니까?
+                </p>
+                <p className="text-xs text-slate-500">
+                  삭제된 워크스페이스와 모든 데이터는 복구할 수 없습니다.
+                </p>
                 <div className="flex gap-2">
                   <button
                     onClick={handleDelete}
