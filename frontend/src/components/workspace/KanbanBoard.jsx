@@ -15,6 +15,26 @@ const groupByStatus = (tasks) => {
   return grouped;
 };
 
+const getDueInfo = (endTime) => {
+  if (!endTime) return null;
+
+  const due = new Date(endTime);
+  due.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.round((due - today) / 86400000);
+  const dateText = endTime.slice(0, 10);
+
+  if (diffDays < 0) {
+    return { text: `${dateText} (기간 초과)`, className: 'text-red-400' };
+  }
+  if (diffDays === 0) {
+    return { text: `${dateText} (오늘 마감)`, className: 'text-yellow-400' };
+  }
+  return { text: dateText, className: 'text-slate-600' };
+};
+
 // ── Mock (workspaceId 없을 때 사용) ─────────────────────────────────────────
 let mockTasks = [
   { taskId: 1, kanbanId: 1, title: '로고 이미지 수정', content: '더 멋진 디자인으로 변경', endTime: '2026-06-01', status: 'TODO' },
@@ -24,11 +44,18 @@ let mockTasks = [
 ];
 let nextMockId = 100;
 
+const mockMembers = [
+  { userId: 1, nickname: '뷔너', role: 'LEADER' },
+  { userId: 2, nickname: '야르', role: 'MEMBER' },
+];
+
 const mockApi = {
   fetchBoard: () => Promise.resolve({ success: true, data: [...mockTasks] }),
-  createTask: () => {
+  fetchMembers: () => Promise.resolve({ success: true, data: { members: mockMembers } }),
+  createTask: (body) => {
     const taskId = nextMockId++;
-    return Promise.resolve({ success: true, data: { taskId, kanbanId: 1 } });
+    mockTasks = [...mockTasks, { taskId, kanbanId: 1, ...body }];
+    return Promise.resolve({ success: true });
   },
   updateTask: (taskId, body) => {
     mockTasks = mockTasks.map((t) => (t.taskId === taskId ? { ...t, ...body } : t));
@@ -43,11 +70,13 @@ const mockApi = {
 const realApi = {
   fetchBoard: (workspaceId, userId) =>
     fetch(`/api/workspaces/${workspaceId}/kanban?userId=${userId}`).then((r) => r.json()),
-  createTask: (workspaceId, userId) =>
+  fetchMembers: (workspaceId, userId) =>
+    fetch(`/api/workspaces/${workspaceId}/members?userId=${userId}`).then((r) => r.json()),
+  createTask: (workspaceId, body) =>
     fetch(`/api/workspaces/${workspaceId}/tasks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId }),
+      body: JSON.stringify(body),
     }).then((r) => r.json()),
   updateTask: (taskId, body) =>
     fetch(`/api/tasks/${taskId}`, {
@@ -69,22 +98,34 @@ const KanbanBoard = ({ userId, workspaceId }) => {
 
   const [cards, setCards] = useState({ TODO: [], IN_PROGRESS: [], DONE: [] });
   const [kanbanId, setKanbanId] = useState(null);
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
   const [dragCard, setDragCard] = useState(null);   // { fromColId, ...card }
   const [dragOverCol, setDragOverCol] = useState(null);
   const dragging = useRef(false);
 
+  const loadBoard = async () => {
+    const result = await (workspaceId
+      ? api.fetchBoard(workspaceId, userId)
+      : api.fetchBoard());
+    if (result.success && Array.isArray(result.data)) {
+      setCards(groupByStatus(result.data));
+      if (result.data[0]?.kanbanId) setKanbanId(result.data[0].kanbanId);
+    }
+  };
+
+  const loadMembers = async () => {
+    const result = await (workspaceId
+      ? api.fetchMembers(workspaceId, userId)
+      : api.fetchMembers());
+    if (result.success) setMembers(result.data?.members ?? []);
+  };
+
   useEffect(() => {
     (async () => {
       try {
-        const result = await (workspaceId
-          ? api.fetchBoard(workspaceId, userId)
-          : api.fetchBoard());
-        if (result.success && Array.isArray(result.data)) {
-          setCards(groupByStatus(result.data));
-          if (result.data[0]?.kanbanId) setKanbanId(result.data[0].kanbanId);
-        }
+        await Promise.all([loadBoard(), loadMembers()]);
       } catch (err) {
         console.error('칸반 조회 오류:', err);
       } finally {
@@ -98,41 +139,34 @@ const KanbanBoard = ({ userId, workspaceId }) => {
   const closeModal = () => setModal(null);
 
   const handleSave = async (form) => {
-    if (modal.card.taskId) {
-      const result = await api.updateTask(modal.card.taskId, { userId, kanbanId, ...form });
-      if (result.success) {
-        setCards((prev) => {
-          const next = { ...prev };
-          next[modal.colId] = next[modal.colId].filter((c) => c.taskId !== modal.card.taskId);
-          next[form.status] = [...next[form.status], { ...modal.card, ...form }];
-          return next;
-        });
-        closeModal();
+    try {
+      if (modal.card.taskId) {
+        const result = await api.updateTask(modal.card.taskId, { userId, kanbanId, ...form });
+        if (result.success) {
+          setCards((prev) => {
+            const next = { ...prev };
+            next[modal.colId] = next[modal.colId].filter((c) => c.taskId !== modal.card.taskId);
+            next[form.status] = [...next[form.status], { ...modal.card, ...form }];
+            return next;
+          });
+          closeModal();
+        } else {
+          alert(result.message || '수정에 실패했습니다.');
+        }
       } else {
-        alert(result.message || '수정에 실패했습니다.');
+        const createResult = await (workspaceId
+          ? api.createTask(workspaceId, { userId, ...form })
+          : api.createTask({ userId, ...form }));
+        if (createResult.success) {
+          await loadBoard();
+          closeModal();
+        } else {
+          alert(createResult.message || '태스크 생성에 실패했습니다.');
+        }
       }
-    } else {
-      const createResult = await (workspaceId
-        ? api.createTask(workspaceId, userId)
-        : api.createTask());
-      if (!createResult.success) {
-        alert(createResult.message || '태스크 생성에 실패했습니다.');
-        return;
-      }
-      const newTaskId   = createResult.data.taskId;
-      const newKanbanId = createResult.data.kanbanId ?? kanbanId;
-
-      const patchResult = await api.updateTask(newTaskId, { userId, kanbanId: newKanbanId, ...form });
-      if (patchResult.success) {
-        setCards((prev) => ({
-          ...prev,
-          [form.status]: [...prev[form.status], { taskId: newTaskId, kanbanId: newKanbanId, ...form }],
-        }));
-        if (newKanbanId && !kanbanId) setKanbanId(newKanbanId);
-        closeModal();
-      } else {
-        alert(patchResult.message || '태스크 저장에 실패했습니다.');
-      }
+    } catch (err) {
+      console.error('태스크 저장 오류:', err);
+      alert('태스크 저장 중 오류가 발생했습니다.');
     }
   };
 
@@ -269,6 +303,7 @@ const KanbanBoard = ({ userId, workspaceId }) => {
                 ) : (
                   cards[col.id].map((card) => {
                     const isBeingDragged = dragCard?.taskId === card.taskId;
+                    const dueInfo = getDueInfo(card.endTime);
                     return (
                       <div
                         key={card.taskId}
@@ -284,8 +319,8 @@ const KanbanBoard = ({ userId, workspaceId }) => {
                         {card.content && (
                           <p className="mt-1 text-xs text-slate-500 line-clamp-2">{card.content}</p>
                         )}
-                        {card.endTime && (
-                          <p className="mt-2 text-xs text-slate-600">{card.endTime?.slice(0, 10)}</p>
+                        {dueInfo && (
+                          <p className={`mt-2 text-right text-xs ${dueInfo.className}`}>{dueInfo.text}</p>
                         )}
                       </div>
                     );
@@ -301,6 +336,7 @@ const KanbanBoard = ({ userId, workspaceId }) => {
         <TaskModal
           task={modal.card}
           columns={COLUMNS}
+          members={members}
           onSave={handleSave}
           onDelete={modal.card.taskId ? handleDelete : null}
           onClose={closeModal}

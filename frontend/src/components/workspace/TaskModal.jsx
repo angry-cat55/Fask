@@ -1,25 +1,70 @@
 import React, { useState } from 'react';
 
-const TaskModal = ({ task, columns, onSave, onDelete, onClose }) => {
+const ManagerSelect = ({ members, value, onChange }) => {
+  const selectedMember = members.find((m) => m.userId === value);
+  const [query, setQuery] = useState(selectedMember?.nickname || '');
+  const [open, setOpen] = useState(false);
+
+  const filtered = members.filter((m) =>
+    m.nickname.toLowerCase().includes(query.toLowerCase()),
+  );
+
+  const handleSelect = (member) => {
+    onChange(member.userId);
+    setQuery(member.nickname);
+    setOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <input
+        value={query}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        placeholder="담당자 이름 검색"
+        className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400/50"
+      />
+      {open && (
+        <div className="absolute z-10 mt-1 max-h-40 w-full overflow-y-auto rounded-xl border border-white/10 bg-slate-800 shadow-xl">
+          {filtered.length === 0 ? (
+            <p className="px-3 py-2 text-xs text-slate-500">검색 결과가 없습니다.</p>
+          ) : (
+            filtered.map((member) => (
+              <button
+                key={member.userId}
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); handleSelect(member); }}
+                className={`block w-full px-3 py-2 text-left text-sm transition hover:bg-slate-700 ${
+                  member.userId === value ? 'text-cyan-300' : 'text-white'
+                }`}
+              >
+                {member.nickname}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const TaskModal = ({ task, columns, members = [], onSave, onDelete, onClose }) => {
   const [form, setForm] = useState({
-    title:     task.title                   || '',
-    content:   task.content                 || '',
-    startTime: task.startTime?.slice(0, 10) || '',
-    endTime:   task.endTime?.slice(0, 10)   || '',
-    status:    task.status                  || 'TODO',
+    title:     task.title                       || '',
+    content:   task.content                     || '',
+    startTime: task.startTime?.slice(0, 10)     || '',
+    endTime:   task.endTime?.slice(0, 10)       || '',
+    status:    task.status                      || 'TODO',
+    managerId: task.managerId ?? members[0]?.userId ?? '',
   });
 
   const set = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
+
         <h3 className="mb-5 text-lg font-bold text-white">
           {task.taskId ? '태스크 수정' : '태스크 추가'}
         </h3>
@@ -31,7 +76,7 @@ const TaskModal = ({ task, columns, onSave, onDelete, onClose }) => {
               autoFocus
               value={form.title}
               onChange={(e) => set('title', e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') onSave(form); if (e.key === 'Escape') onClose(); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') onSave(form); }}
               className="rounded-xl border border-white/10 bg-slate-800 px-4 py-2.5 text-sm text-white outline-none focus:border-cyan-400/50"
             />
           </div>
@@ -67,6 +112,15 @@ const TaskModal = ({ task, columns, onSave, onDelete, onClose }) => {
                 className="rounded-xl border border-white/10 bg-slate-800 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400/50"
               />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-slate-400">담당자</label>
+            <ManagerSelect
+              members={members}
+              value={form.managerId}
+              onChange={(managerId) => set('managerId', managerId)}
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">
