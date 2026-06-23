@@ -173,6 +173,13 @@ const Sidebar = ({
   }, [userId, workspaceRefreshToken]);
 
   useEffect(() => {
+    if (workspaceRefreshToken > 0 && isMemberListOpen) {
+      fetchMembers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspaceRefreshToken]);
+
+  useEffect(() => {
     const handleClickOutside = (e) => {
       if (
         isWorkspaceSwitcherOpen &&

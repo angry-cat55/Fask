@@ -40,6 +40,7 @@ const WorkspacePage = ({
   const [firstUnreadMessageId, setFirstUnreadMessageId] = useState(null);
   const [summary, setSummary] = useState(null);
   const [workspaceRefreshToken, setWorkspaceRefreshToken] = useState(0);
+  const [forceExitMessage, setForceExitMessage] = useState(null);
 
   useEffect(() => {
     const workspaceId = user?.workspaceId;
@@ -54,7 +55,12 @@ const WorkspacePage = ({
   }, [user?.workspaceId, user?.userId]);
 
   const socketMessageHandler = useRef(null);
+  const onLeaveWorkspaceRef = useRef(onLeaveWorkspace);
   const socketRef = useRef(null);
+
+  useEffect(() => {
+    onLeaveWorkspaceRef.current = onLeaveWorkspace;
+  }, [onLeaveWorkspace]);
 
   useEffect(() => {
     socketMessageHandler.current = (msg) => {
@@ -90,6 +96,10 @@ const WorkspacePage = ({
       socketMessageHandler.current?.(msg);
     });
 
+    socket.on('force_exit', (data) => {
+      setForceExitMessage(data?.message || '워크스페이스에서 강제 퇴장되었습니다.');
+    });
+
     socket.on('connect_error', (error) => {
       console.error('Socket.IO 연결 오류:', error);
     });
@@ -101,6 +111,32 @@ const WorkspacePage = ({
         socketRef.current = null;
       }
     };
+  }, [user?.workspaceId, user?.userId]);
+
+  useEffect(() => {
+    const workspaceId = user?.workspaceId;
+    const userId = user?.userId;
+    if (!workspaceId || !userId) return;
+
+    const checkMembership = async () => {
+      try {
+        const res = await fetch(`/api/workspaces/${workspaceId}/members?userId=${userId}`);
+        const result = await res.json();
+        if (result.success) {
+          const isMember = result.data?.members?.some(
+            (m) => String(m.userId) === String(userId)
+          );
+          if (!isMember) {
+            setForceExitMessage('워크스페이스에서 강제 퇴장되었습니다.');
+          }
+        } else if (res.status === 403) {
+          setForceExitMessage('워크스페이스에서 강제 퇴장되었습니다.');
+        }
+      } catch { /* 네트워크 오류 무시 */ }
+    };
+
+    const intervalId = setInterval(checkMembership, 1000);
+    return () => clearInterval(intervalId);
   }, [user?.workspaceId, user?.userId]);
 
   const handleSelect = (id) => {
@@ -172,6 +208,32 @@ const WorkspacePage = ({
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-950 text-white">
+      {forceExitMessage && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="w-80 rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl flex flex-col items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/15">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-rose-400">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-white">강제 퇴장</p>
+              <p className="mt-1.5 text-sm text-slate-400">{forceExitMessage}</p>
+            </div>
+            <button
+              onClick={() => {
+                setForceExitMessage(null);
+                onLeaveWorkspaceRef.current?.();
+              }}
+              className="w-full rounded-xl bg-rose-500/20 py-2 text-sm font-semibold text-rose-300 transition hover:bg-rose-500/30"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
       <Sidebar
         openPanels={activeIds}
         onSelect={handleSelect}
