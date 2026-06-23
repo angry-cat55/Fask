@@ -101,6 +101,7 @@ const KanbanBoard = ({ userId, workspaceId }) => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
+  const [modalKey, setModalKey] = useState(0);
   const [dragCard, setDragCard] = useState(null);   // { fromColId, ...card }
   const [dragOverCol, setDragOverCol] = useState(null);
   const dragging = useRef(false);
@@ -115,17 +116,18 @@ const KanbanBoard = ({ userId, workspaceId }) => {
     }
   };
 
-  const loadMembers = async () => {
-    const result = await (workspaceId
-      ? api.fetchMembers(workspaceId, userId)
-      : api.fetchMembers());
-    if (result.success) setMembers(result.data?.members ?? []);
-  };
-
   useEffect(() => {
     (async () => {
       try {
-        await Promise.all([loadBoard(), loadMembers()]);
+        const [boardResult, membersResult] = await Promise.all([
+          workspaceId ? api.fetchBoard(workspaceId, userId) : api.fetchBoard(),
+          workspaceId ? api.fetchMembers(workspaceId, userId) : api.fetchMembers(),
+        ]);
+        if (boardResult.success && Array.isArray(boardResult.data)) {
+          setCards(groupByStatus(boardResult.data));
+          if (boardResult.data[0]?.kanbanId) setKanbanId(boardResult.data[0].kanbanId);
+        }
+        if (membersResult.success) setMembers(membersResult.data?.members ?? []);
       } catch (err) {
         console.error('칸반 조회 오류:', err);
       } finally {
@@ -134,8 +136,8 @@ const KanbanBoard = ({ userId, workspaceId }) => {
     })();
   }, [workspaceId, userId, api]);
 
-  const openAdd  = (colId) => setModal({ colId, card: { status: colId } });
-  const openEdit = (colId, card) => setModal({ colId, card });
+  const openAdd  = (colId) => { setModalKey((k) => k + 1); setModal({ colId, card: { status: colId } }); };
+  const openEdit = (colId, card) => { setModalKey((k) => k + 1); setModal({ colId, card }); };
   const closeModal = () => setModal(null);
 
   const handleSave = async (form) => {
@@ -149,9 +151,11 @@ const KanbanBoard = ({ userId, workspaceId }) => {
             next[form.status] = [...next[form.status], { ...modal.card, ...form }];
             return next;
           });
-          closeModal();
+          setModal((prev) => prev ? { ...prev, colId: form.status, card: { ...prev.card, ...form } } : null);
+          return true;
         } else {
           alert(result.message || '수정에 실패했습니다.');
+          return false;
         }
       } else {
         const createResult = await (workspaceId
@@ -160,13 +164,16 @@ const KanbanBoard = ({ userId, workspaceId }) => {
         if (createResult.success) {
           await loadBoard();
           closeModal();
+          return true;
         } else {
           alert(createResult.message || '태스크 생성에 실패했습니다.');
+          return false;
         }
       }
     } catch (err) {
       console.error('태스크 저장 오류:', err);
       alert('태스크 저장 중 오류가 발생했습니다.');
+      return false;
     }
   };
 
@@ -311,13 +318,13 @@ const KanbanBoard = ({ userId, workspaceId }) => {
                         onDragStart={(e) => handleDragStart(e, card, col.id)}
                         onDragEnd={handleDragEnd}
                         onClick={() => { if (!dragging.current) openEdit(col.id, card); }}
-                        className={`cursor-grab rounded-xl border border-white/5 bg-slate-900 p-3 text-sm text-white transition select-none
+                        className={`cursor-grab rounded-xl border border-white/5 bg-slate-900 p-3 text-sm text-white transition select-none overflow-hidden max-h-40
                           hover:border-white/20 hover:bg-slate-800 active:cursor-grabbing
                           ${isBeingDragged ? 'opacity-30' : 'opacity-100'}`}
                       >
-                        <p className="font-medium">{card.title}</p>
+                        <p className="font-medium line-clamp-2 break-all">{card.title}</p>
                         {card.content && (
-                          <p className="mt-1 text-xs text-slate-500 line-clamp-2">{card.content}</p>
+                          <p className="mt-1 text-xs text-slate-500 line-clamp-2 break-all">{card.content}</p>
                         )}
                         {dueInfo && (
                           <p className={`mt-2 text-right text-xs ${dueInfo.className}`}>{dueInfo.text}</p>
@@ -334,6 +341,7 @@ const KanbanBoard = ({ userId, workspaceId }) => {
 
       {modal && (
         <TaskModal
+          key={modalKey}
           task={modal.card}
           columns={COLUMNS}
           members={members}
