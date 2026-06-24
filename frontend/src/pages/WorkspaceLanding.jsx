@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import WorkspaceCreateCard from '../components/workspace/WorkspaceCreateCard.jsx';
 import WorkspaceList from '../components/workspace/WorkspaceList.jsx';
 import InboxView from '../components/workspace/InboxView.jsx';
@@ -10,6 +10,16 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout, onUserUpdate }) =>
   const [creating, setCreating] = useState(false);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const scrollRef = useRef(null);
+
+  const handleScroll = (e) => {
+    setShowScrollTop(e.target.scrollTop > 300);
+  };
+
+  const scrollToTop = () => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const loadList = useCallback(() => {
     const userId = user?.userId ?? '';
@@ -126,7 +136,7 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout, onUserUpdate }) =>
         </aside>
       )}
 
-      <main className="flex flex-1 flex-col overflow-auto">
+      <main className="relative flex flex-1 flex-col overflow-hidden">
         {/* 헤더 */}
         <header className="flex items-center justify-between border-b border-white/5 px-8 py-4">
           <div className="flex items-center gap-3">
@@ -156,42 +166,63 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout, onUserUpdate }) =>
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col overflow-auto divide-y divide-white/5">
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex flex-1 flex-col overflow-auto divide-y divide-white/5
+            [&::-webkit-scrollbar]:w-1.5
+            [&::-webkit-scrollbar-track]:bg-transparent
+            [&::-webkit-scrollbar-thumb]:rounded-full
+            [&::-webkit-scrollbar-thumb]:bg-white/10
+            hover:[&::-webkit-scrollbar-thumb]:bg-white/20"
+        >
           <section className="p-8 flex items-center justify-center">
             <WorkspaceCreateCard onCreate={handleCreate} loading={creating} />
           </section>
 
-          <section className="p-8">
-            <h2 className="text-lg font-semibold mb-4">내 워크스페이스</h2>
+          <section className="p-8 flex flex-col items-center">
+            <div className="w-full max-w-2xl">
+              <h2 className="text-lg font-semibold mb-4">내 워크스페이스</h2>
 
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="워크스페이스 이름 검색"
-              className="mb-4 w-full max-w-xs rounded-md border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
-            />
-
-            {loading ? (
-              <div className="rounded-md border border-white/5 bg-slate-900/60 p-6 text-slate-400">
-                불러오는 중...
-              </div>
-            ) : error ? (
-              <div className="rounded-md border border-white/5 bg-rose-900/60 p-6 text-red-300">
-                워크스페이스를 불러오지 못했습니다.
-              </div>
-            ) : (
-              <WorkspaceList
-                items={items.filter((it) =>
-                  (it.name ?? it.workspaceName ?? '')
-                    .toLowerCase()
-                    .includes(searchTerm.trim().toLowerCase()),
-                )}
-                onEnterWorkspace={onEnterWorkspace}
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="워크스페이스 이름 검색"
+                className="mb-4 w-full max-w-xs rounded-md border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
               />
-            )}
+
+              {loading ? (
+                <div className="rounded-md border border-white/5 bg-slate-900/60 p-6 text-slate-400">
+                  불러오는 중...
+                </div>
+              ) : error ? (
+                <div className="rounded-md border border-white/5 bg-rose-900/60 p-6 text-red-300">
+                  워크스페이스를 불러오지 못했습니다.
+                </div>
+              ) : (
+                <WorkspaceList
+                  items={items.filter((it) =>
+                    (it.name ?? it.workspaceName ?? '')
+                      .toLowerCase()
+                      .includes(searchTerm.trim().toLowerCase()),
+                  )}
+                  onEnterWorkspace={onEnterWorkspace}
+                />
+              )}
+            </div>
           </section>
         </div>
+
+        {showScrollTop && (
+          <button
+            onClick={scrollToTop}
+            aria-label="맨 위로 이동"
+            className="absolute bottom-6 right-6 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-800/90 text-white shadow-lg transition hover:bg-slate-700"
+          >
+            ↑
+          </button>
+        )}
       </main>
     </div>
   );
