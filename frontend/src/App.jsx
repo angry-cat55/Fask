@@ -70,6 +70,7 @@ function App() {
           user={user}
           onLogout={handleLogout}
           onEnterWorkspace={enterWorkspace}
+          onUserUpdate={handleUserUpdate}
         />
       </ErrorBoundary>
     );
