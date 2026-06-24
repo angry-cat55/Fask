@@ -3,13 +3,14 @@ import WorkspaceCreateCard from '../components/workspace/WorkspaceCreateCard.jsx
 import WorkspaceList from '../components/workspace/WorkspaceList.jsx';
 import InboxView from '../components/workspace/InboxView.jsx';
 
-const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout }) => {
+const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout, onUserUpdate }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [creating, setCreating] = useState(false);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const loadList = useCallback(() => {
     const userId = user?.userId ?? '';
@@ -74,6 +75,17 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout }) => {
         }
 
         const newId = json?.data?.workspaceId;
+
+        // 백엔드의 워크스페이스 목록 조회 API가 summary_period/auto_task_period를
+        // 응답에 포함하지 않으므로, 생성 시 입력한 값을 user에 직접 반영해
+        // 설정 화면 진입 시 방금 지정한 주기가 보이도록 함
+        onUserUpdate?.({
+          ...user,
+          workspaceName: newWorkspace.name,
+          summary_period: summaryPeriod,
+          auto_task_period: autoTaskPeriod,
+        });
+
         if (newId && typeof onEnterWorkspace === 'function') {
           onEnterWorkspace(newId);
           return;
@@ -87,7 +99,7 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout }) => {
         setCreating(false);
       }
     },
-    [user?.userId, loadList, onEnterWorkspace],
+    [user, loadList, onEnterWorkspace, onUserUpdate],
   );
 
   return (
@@ -177,6 +189,14 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout }) => {
           <section className="p-8">
             <h2 className="text-lg font-semibold mb-4">내 워크스페이스</h2>
 
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="워크스페이스 이름 검색"
+              className="mb-4 w-full max-w-xs rounded-md border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-cyan-500"
+            />
+
             {loading ? (
               <div className="rounded-md border border-white/5 bg-slate-900/60 p-6 text-slate-400">
                 불러오는 중...
@@ -187,7 +207,11 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout }) => {
               </div>
             ) : (
               <WorkspaceList
-                items={items}
+                items={items.filter((it) =>
+                  (it.name ?? it.workspaceName ?? '')
+                    .toLowerCase()
+                    .includes(searchTerm.trim().toLowerCase()),
+                )}
                 onEnterWorkspace={onEnterWorkspace}
               />
             )}
