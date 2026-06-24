@@ -65,6 +65,7 @@ const viewRowCls = 'rounded-xl border border-white/10 bg-slate-800 px-4 py-2.5 t
 const TaskModal = ({ task, columns, members = [], onSave, onDelete, onClose }) => {
   const isNew = !task.taskId;
   const [isEditing, setIsEditing] = useState(isNew);
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     title:     task.title                       || '',
     content:   task.content                     || '',
@@ -175,13 +176,20 @@ const TaskModal = ({ task, columns, members = [], onSave, onDelete, onClose }) =
                   취소
                 </button>
                 <button
+                  disabled={saving}
                   onClick={async () => {
-                    const ok = await onSave(form);
-                    if (ok && !isNew) setIsEditing(false);
+                    if (saving) return;
+                    setSaving(true);
+                    try {
+                      const ok = await onSave(form);
+                      if (ok && !isNew) setIsEditing(false);
+                    } finally {
+                      setSaving(false);
+                    }
                   }}
-                  className="rounded-xl bg-cyan-500/20 px-4 py-2 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-500/30"
+                  className="rounded-xl bg-cyan-500/20 px-4 py-2 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  저장
+                  {saving ? '저장 중...' : '저장'}
                 </button>
               </div>
             </div>
