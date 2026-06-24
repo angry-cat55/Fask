@@ -146,7 +146,13 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout, onUserUpdate }) =>
             </button>
           </div>
           <div className="flex-1 overflow-y-auto">
-            <InboxView user={user} onAccepted={loadList} />
+            <InboxView
+                user={user}
+                onAccepted={(workspaceId) => {
+                  if (workspaceId) onEnterWorkspace?.(workspaceId);
+                  else loadList();
+                }}
+              />
           </div>
         </aside>
       )}
