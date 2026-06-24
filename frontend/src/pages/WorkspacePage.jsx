@@ -306,7 +306,10 @@ const WorkspacePage = ({
             <div className="flex-1 overflow-y-auto">
               <InboxView
                 user={user}
-                onAccepted={() => setWorkspaceRefreshToken((prev) => prev + 1)}
+                onAccepted={(workspaceId) => {
+                    setWorkspaceRefreshToken((prev) => prev + 1);
+                    if (workspaceId) onSwitchWorkspace?.(workspaceId);
+                  }}
               />
             </div>
           </div>

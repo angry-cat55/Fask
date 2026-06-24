@@ -20,7 +20,7 @@ const InboxView = ({ user, onAccepted }) => {
       const result = await res.json();
       if (result.success) {
         removeItem(item.workspaceId);
-        onAccepted?.();
+        onAccepted?.(item.workspaceId);
       } else {
         alert(result.message || '수락에 실패했습니다.');
       }
