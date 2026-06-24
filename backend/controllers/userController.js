@@ -250,3 +250,40 @@ exports.deleteAccount = async (req, res) => {
         });
     }
 };
+
+// 닉네임 변경 컨트롤러
+exports.updateNickname = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { nickname } = req.body;
+
+        if (!userId || !nickname) {
+            return res.status(400).json({
+                success: false,
+                message: '필수 입력값이 누락되었습니다.',
+            });
+        }
+
+        const updatedUser = await userService.updateNickname({
+            userId,
+            nickname,
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: '닉네임 변경 성공',
+            data: {
+                userId: updatedUser.userId,
+                nickname: updatedUser.nickname,
+            },
+        });
+
+    } catch (error) {
+        console.error('닉네임 변경 오류:', error);
+
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || '서버 오류가 발생했습니다.',
+        });
+    }
+};

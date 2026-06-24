@@ -26,4 +26,8 @@ router.patch('/reset-password', userController.resetPassword);
 // DELETE /api/users/me 요청을 userController의 deleteAccount 컨트롤러로 전달
 router.delete('/me', userController.deleteAccount);
 
+// 닉네임 변경 API
+// PATCH /api/users/:userId/nickname
+router.patch('/:userId/nickname', userController.updateNickname);
+
 module.exports = router;

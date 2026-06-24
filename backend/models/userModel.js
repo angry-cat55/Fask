@@ -83,3 +83,17 @@ exports.deleteUserById = async (userId) => {
     // SQL 쿼리를 실행하여 userId에 해당하는 사용자 정보를 삭제
     await pool.query(sql, [userId]);
 }
+
+// 유저 닉네임 변경
+exports.updateNicknameById = async ({ userId, nickname }) => {
+    const sql = `
+        UPDATE users
+        SET nickname = ?
+        WHERE user_id = ?
+    `;
+
+    await pool.query(sql, [
+        nickname,
+        userId,
+    ]);
+};

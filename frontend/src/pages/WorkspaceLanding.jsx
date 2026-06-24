@@ -9,6 +9,7 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout, onUserUpdate }) =>
   const [error, setError] = useState(null);
   const [creating, setCreating] = useState(false);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showScrollTop, setShowScrollTop] = useState(false);
   const scrollRef = useRef(null);
@@ -113,6 +114,30 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout, onUserUpdate }) =>
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-950 text-white">
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="w-80 rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl flex flex-col gap-4">
+            <div className="text-center">
+              <p className="text-sm font-semibold text-white">로그아웃</p>
+              <p className="mt-1.5 text-sm text-slate-400">정말 로그아웃 하시겠습니까?</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 rounded-xl border border-white/10 py-2 text-sm text-slate-400 transition hover:text-white"
+              >
+                취소
+              </button>
+              <button
+                onClick={onLogout}
+                className="flex-1 rounded-xl bg-cyan-500/20 py-2 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-500/30"
+              >
+                로그아웃
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* 수신함 드로어 */}
       {isInboxOpen && (
         <aside className="w-80 shrink-0 border-r border-white/10 bg-slate-900/80 flex flex-col">
@@ -131,7 +156,13 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout, onUserUpdate }) =>
             </button>
           </div>
           <div className="flex-1 overflow-y-auto">
-            <InboxView user={user} onAccepted={loadList} />
+            <InboxView
+                user={user}
+                onAccepted={(workspaceId) => {
+                  if (workspaceId) onEnterWorkspace?.(workspaceId);
+                  else loadList();
+                }}
+              />
           </div>
         </aside>
       )}
@@ -158,7 +189,7 @@ const WorkspaceLanding = ({ user, onEnterWorkspace, onLogout, onUserUpdate }) =>
               수신함
             </button>
             <button
-              onClick={onLogout}
+              onClick={() => setShowLogoutConfirm(true)}
               className="text-xs text-slate-500 hover:text-white transition"
             >
               로그아웃
