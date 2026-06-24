@@ -139,3 +139,43 @@ exports.deleteAccount = async (userId) => {
         statusCode: 200,
     }
 }
+
+// 닉네임 변경 비즈니스 로직
+exports.updateNickname = async ({ userId, nickname }) => {
+    // 1. 유저 존재 확인
+    const user = await userModel.findUserById(userId);
+
+    if (!user) {
+        const error = new Error('존재하지 않는 사용자입니다.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // 2. 닉네임 공백 제거
+    const trimmedNickname = nickname.trim();
+
+    if (trimmedNickname === '') {
+        const error = new Error('닉네임을 입력해주세요.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // 3. 기존 닉네임과 같은지 확인
+    if (user.nickname === trimmedNickname) {
+        const error = new Error('기존 닉네임과 동일합니다.');
+        error.statusCode = 409;
+        throw error;
+    }
+
+    // 4. 닉네임 변경
+    await userModel.updateNicknameById({
+        userId,
+        nickname: trimmedNickname,
+    });
+
+    // 5. controller로 반환
+    return {
+        userId: Number(userId),
+        nickname: trimmedNickname,
+    };
+};
