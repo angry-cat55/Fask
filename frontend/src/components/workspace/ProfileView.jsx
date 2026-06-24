@@ -22,7 +22,7 @@ const ProfileView = ({ user, onLogout, onUserUpdate }) => {
     }
     setNicknameLoading(true);
     try {
-      const res = await fetch('/api/users/me', {
+      const res = await fetch(`/api/users/${user?.userId}/nickname`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nickname: trimmed }),
