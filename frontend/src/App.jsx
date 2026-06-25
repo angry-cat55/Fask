@@ -16,16 +16,8 @@ function App() {
       return null;
     }
   });
-  const [currentPage, setCurrentPage] = useState(() => {
-    try {
-      const saved = localStorage.getItem('user');
-      if (!saved) return 'login';
-      const u = JSON.parse(saved);
-      return u?.workspaceId ? 'workspace' : 'workspace-landing';
-    } catch {
-      return 'login';
-    }
-  });
+  // 앱은 항상 로그인 화면으로 시작 (localStorage에 이전 세션이 남아있어도 자동 진입하지 않음)
+  const [currentPage, setCurrentPage] = useState('login');
 
   const handleLoginSuccess = (userData) => {
     localStorage.setItem('user', JSON.stringify(userData));
