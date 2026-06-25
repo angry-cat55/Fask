@@ -170,7 +170,9 @@ const Sidebar = ({
         setWorkspaceList(result.data?.workspaces ?? []);
       })
       .catch(() => {});
-  }, [userId, workspaceRefreshToken]);
+    // nickname이 바뀌면 masterNickname과의 비교가 최신 닉네임을 기준으로
+    // 다시 이뤄지도록 워크스페이스 목록(서버의 최신 masterNickname 포함)을 재조회
+  }, [userId, workspaceRefreshToken, nickname]);
 
   useEffect(() => {
     if (workspaceRefreshToken > 0 && isMemberListOpen) {
