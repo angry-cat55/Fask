@@ -421,6 +421,11 @@ const Sidebar = ({
                       </div>
                       <span className="flex-1 truncate text-left text-xs font-medium">
                         {ws.name}
+                        {nickname && ws.masterNickname === nickname && (
+                          <span className="ml-1.5 text-[10px] font-normal text-cyan-400">
+                            (방장)
+                          </span>
+                        )}
                       </span>
                       {isCurrent && (
                         <span className="shrink-0 h-1.5 w-1.5 rounded-full bg-cyan-400" />
