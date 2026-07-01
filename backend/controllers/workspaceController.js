@@ -395,6 +395,39 @@ exports.summarizeChatMessages = async (req, res) => {
     }
 };
 
+// 워크스페이스의 대화 내용 요약 조회 컨트롤러
+exports.getChatSummary = async (req, res) => {
+    try {
+        const { workspaceId } = req.params;
+        const { userId } = req.query;
+
+        // 필수 입력값 확인
+        if (!workspaceId || !userId) {
+            return res.status(400).json({
+                success: false,
+                message: '필수 입력값이 누락되었습니다.',
+            });
+        }
+
+        // 요약 조회 실행
+        const result = await summaryService.getWorkspaceSummary(workspaceId, userId);
+
+        return res.status(result.statusCode).json({
+            success: true,
+            message: result.message,
+            data: result.data,
+        });
+
+    } catch (error) {
+        console.error('대화 내용 요약 조회 중 오류:', error);
+
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || '서버 오류가 발생했습니다.',
+        });
+    }
+};
+
 // 확인한 마지막 메세지 ID 갱신 컨트롤러
 exports.updateLastReadMessage = async (req, res) => {
     try {

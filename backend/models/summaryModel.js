@@ -28,3 +28,15 @@ exports.saveSummary = async ({ workspaceId, summaryContent, startMessageId, endM
 
     return { summaryId, workspaceId, summaryContent, startMessageId, endMessageId, createdAt };
 };
+
+// 워크스페이스의 특정 요약 조회
+exports.getSummaryById = async (summaryId) => {
+    const sql = `
+        SELECT summary_id AS summaryId, workspace_id AS workspaceId, summary_content AS summaryContent, start_message_id AS startMessageId, end_message_id AS endMessageId, created_at AS createdAt
+        FROM ai_summaries
+        WHERE summary_id = ?
+    `;
+
+    const [rows] = await pool.query(sql, [summaryId]);
+    return rows[0];
+};
