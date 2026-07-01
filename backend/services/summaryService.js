@@ -3,6 +3,7 @@ const summaryModel = require('../models/summaryModel');
 const chatModel = require('../models/chatModel');
 const workspaceModel = require('../models/workspaceModel');
 
+// 워크스페이스의 대화 내용 수동 요약 실행
 const executeWorkspaceSummary = async (workspaceId, userId) => {
     // 유저가 워크스페이스 멤버인지 확인
     const isMember = await workspaceModel.findWorkspaceMember({ workspaceId, userId });
@@ -79,4 +80,25 @@ const executeWorkspaceSummary = async (workspaceId, userId) => {
     };
 };
 
-module.exports = { executeWorkspaceSummary };
+// 워크스페이스의 대화 내용 요약 조회
+const getWorkspaceSummary = async (workspaceId, userId) => {
+    // 유저가 워크스페이스 멤버인지 확인
+    const isMember = await workspaceModel.findWorkspaceMember({ workspaceId, userId });
+    if (!isMember) {
+        const error = new Error('해당 워크스페이스에 참여한 사용자가 아닙니다.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // DB에서 최신 요약 조회 (summaryId, workspaceId, summaryContent, startMessageId, endMessageId, createdAt)
+    const lastSummary = await summaryModel.getLatestSummary(workspaceId);
+
+    // 결과 반환
+    return {
+        statusCode: 200,
+        message: '대화 내용 요약 조회 성공',
+        data: lastSummary,
+    };
+};
+
+module.exports = { executeWorkspaceSummary, getWorkspaceSummary };

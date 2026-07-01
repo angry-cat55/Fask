@@ -62,6 +62,10 @@ router.get('/:workspaceId/members', workspaceController.getWorkspaceMembers);
 // POST /api/workspaces/:workspaceId/messages/summary
 router.post('/:workspaceId/messages/summary', workspaceController.summarizeChatMessages);
 
+// 워크스페이스의 대화 내용 요약 조회 API
+// GET /api/workspaces/:workspaceId/messages/summary?userId=1
+router.get('/:workspaceId/messages/summary', workspaceController.getChatSummary);
+
 // 확인한 마지막 메세지 ID 갱신 API
 // PATCH /api/workspaces/:workspaceId/read
 router.patch('/:workspaceId/read', workspaceController.updateLastReadMessage);
