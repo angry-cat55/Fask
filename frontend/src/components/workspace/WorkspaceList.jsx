@@ -17,13 +17,13 @@ const WorkspaceList = ({ items = [], onEnterWorkspace }) => {
           <li
             key={id}
             className="flex cursor-pointer items-center justify-between rounded-md border border-white/5 bg-slate-900/60 p-3 hover:bg-slate-900/80"
-            onClick={() => onEnterWorkspace?.(id)}
+            onClick={() => onEnterWorkspace?.(id, it.name ?? it.workspaceName)}
             role={onEnterWorkspace ? 'button' : undefined}
             tabIndex={onEnterWorkspace ? 0 : undefined}
             onKeyDown={(e) => {
               if ((e.key === 'Enter' || e.key === ' ') && onEnterWorkspace) {
                 e.preventDefault();
-                onEnterWorkspace(id);
+                onEnterWorkspace(id, it.name ?? it.workspaceName);
               }
             }}
           >
