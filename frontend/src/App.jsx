@@ -16,26 +16,34 @@ function App() {
       return null;
     }
   });
+
   const [currentPage, setCurrentPage] = useState(() => {
+    // 새로고침: sessionStorage에 저장된 페이지 복원
+    const session = sessionStorage.getItem('currentPage');
+    if (session) return session;
+    // 창 새로 열기: localStorage에 user가 있으면 워크스페이스 목록으로
     try {
-      const saved = localStorage.getItem('user');
-      if (!saved) return 'login';
-      const u = JSON.parse(saved);
-      return u?.workspaceId ? 'workspace' : 'workspace-landing';
+      return localStorage.getItem('user') ? 'workspace-landing' : 'login';
     } catch {
       return 'login';
     }
   });
 
+  const navigateTo = (page) => {
+    sessionStorage.setItem('currentPage', page);
+    setCurrentPage(page);
+  };
+
   const handleLoginSuccess = (userData) => {
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
-    setCurrentPage('workspace-landing');
+    navigateTo('workspace-landing');
     alert(`${userData.nickname}님 환영합니다!`);
   };
 
   const handleLogout = () => {
     localStorage.removeItem('user');
+    sessionStorage.removeItem('currentPage');
     setUser(null);
     setCurrentPage('login');
   };
@@ -55,7 +63,7 @@ function App() {
     const { workspaceId, ...rest } = user ?? {};
     localStorage.setItem('user', JSON.stringify(rest));
     setUser(rest);
-    setCurrentPage('workspace-landing');
+    navigateTo('workspace-landing');
   };
 
   if (currentPage === 'workspace-landing') {
@@ -63,7 +71,7 @@ function App() {
       const updated = { ...user, workspaceId, ...(workspaceName ? { workspaceName } : {}) };
       localStorage.setItem('user', JSON.stringify(updated));
       setUser(updated);
-      setCurrentPage('workspace');
+      navigateTo('workspace');
     };
 
     return (
@@ -85,16 +93,16 @@ function App() {
   return (
     <>
       {currentPage === 'signup' ? (
-        <SignupPage onNavigateToLogin={() => setCurrentPage('login')} />
+        <SignupPage onNavigateToLogin={() => navigateTo('login')} />
       ) : currentPage === 'find-id' ? (
-        <FindIdPage onNavigateToLogin={() => setCurrentPage('login')} />
+        <FindIdPage onNavigateToLogin={() => navigateTo('login')} />
       ) : currentPage === 'reset-password' ? (
-        <ResetPasswordPage onNavigateToLogin={() => setCurrentPage('login')} />
+        <ResetPasswordPage onNavigateToLogin={() => navigateTo('login')} />
       ) : (
         <LoginPage
-          onNavigateToSignup={() => setCurrentPage('signup')}
-          onNavigateToFindId={() => setCurrentPage('find-id')}
-          onNavigateToResetPassword={() => setCurrentPage('reset-password')}
+          onNavigateToSignup={() => navigateTo('signup')}
+          onNavigateToFindId={() => navigateTo('find-id')}
+          onNavigateToResetPassword={() => navigateTo('reset-password')}
           onLoginSuccess={handleLoginSuccess}
         />
       )}
