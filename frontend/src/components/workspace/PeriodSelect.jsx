@@ -16,7 +16,7 @@ const PERIOD_OPTIONS = [
   { label: '24시간', value: 1440 },
 ];
 
-const PeriodSelect = ({ value, onChange, className = '' }) => {
+const PeriodSelect = ({ value, onChange, className = '', disabled = false }) => {
   const matched = PERIOD_OPTIONS.some(
     (opt) => String(opt.value) === String(value),
   );
@@ -28,7 +28,8 @@ const PeriodSelect = ({ value, onChange, className = '' }) => {
     <select
       value={effectiveValue}
       onChange={(e) => onChange?.(e.target.value)}
-      className={`w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500 transition cursor-pointer ${className}`}
+      disabled={disabled}
+      className={`w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500 transition ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${className}`}
     >
       {PERIOD_OPTIONS.map((opt) => (
         <option key={opt.value} value={String(opt.value)}>
