@@ -405,7 +405,7 @@ const Sidebar = ({
                       key={ws.workspaceId}
                       type="button"
                       onClick={() => {
-                        if (!isCurrent) onSwitchWorkspace?.(ws.workspaceId);
+                        if (!isCurrent) onSwitchWorkspace?.(ws.workspaceId, ws.name);
                         setIsWorkspaceSwitcherOpen(false);
                       }}
                       className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition

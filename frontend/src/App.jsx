@@ -16,8 +16,16 @@ function App() {
       return null;
     }
   });
-  // 앱은 항상 로그인 화면으로 시작 (localStorage에 이전 세션이 남아있어도 자동 진입하지 않음)
-  const [currentPage, setCurrentPage] = useState('login');
+  const [currentPage, setCurrentPage] = useState(() => {
+    try {
+      const saved = localStorage.getItem('user');
+      if (!saved) return 'login';
+      const u = JSON.parse(saved);
+      return u?.workspaceId ? 'workspace' : 'workspace-landing';
+    } catch {
+      return 'login';
+    }
+  });
 
   const handleLoginSuccess = (userData) => {
     localStorage.setItem('user', JSON.stringify(userData));
@@ -37,8 +45,8 @@ function App() {
     setUser(updatedUser);
   };
 
-  const handleSwitchWorkspace = (workspaceId) => {
-    const updated = { ...user, workspaceId };
+  const handleSwitchWorkspace = (workspaceId, workspaceName) => {
+    const updated = { ...user, workspaceId, ...(workspaceName ? { workspaceName } : {}) };
     localStorage.setItem('user', JSON.stringify(updated));
     setUser(updated);
   };
@@ -51,8 +59,10 @@ function App() {
   };
 
   if (currentPage === 'workspace-landing') {
-    const enterWorkspace = (workspaceId) => {
-      setUser((u) => ({ ...u, workspaceId }));
+    const enterWorkspace = (workspaceId, workspaceName) => {
+      const updated = { ...user, workspaceId, ...(workspaceName ? { workspaceName } : {}) };
+      localStorage.setItem('user', JSON.stringify(updated));
+      setUser(updated);
       setCurrentPage('workspace');
     };
 

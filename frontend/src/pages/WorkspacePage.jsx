@@ -54,6 +54,22 @@ const WorkspacePage = ({
       .catch(() => {});
   }, [user?.workspaceId, user?.userId]);
 
+  useEffect(() => {
+    const workspaceId = user?.workspaceId;
+    const userId = user?.userId;
+    if (!workspaceId || !userId || user?.workspaceName) return;
+    fetch(`/api/workspaces?userId=${userId}`)
+      .then((r) => r.json())
+      .then((result) => {
+        const ws = result.data?.workspaces?.find(
+          (w) => String(w.workspaceId) === String(workspaceId)
+        );
+        if (ws?.name) onUserUpdate({ ...user, workspaceName: ws.name });
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.workspaceId, user?.userId, user?.workspaceName]);
+
   const socketMessageHandler = useRef(null);
   const onLeaveWorkspaceRef = useRef(onLeaveWorkspace);
   const socketRef = useRef(null);
