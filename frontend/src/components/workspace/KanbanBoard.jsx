@@ -104,7 +104,7 @@ const KanbanBoard = ({ userId, workspaceId }) => {
   const [modalKey, setModalKey] = useState(0);
   const [dragCard, setDragCard] = useState(null);   // { fromColId, ...card }
   const [dragOverCol, setDragOverCol] = useState(null);
-  const dragging = useRef(false);
+  const dragEndTime = useRef(0);
 
   const loadBoard = async () => {
     const result = await (workspaceId
@@ -194,13 +194,13 @@ const KanbanBoard = ({ userId, workspaceId }) => {
 
   // ── Drag & Drop ─────────────────────────────────────────────────────────────
   const handleDragStart = (e, card, colId) => {
-    dragging.current = true;
+    dragEndTime.current = 0;
     setDragCard({ ...card, fromColId: colId });
     e.dataTransfer.effectAllowed = 'move';
   };
 
   const handleDragEnd = () => {
-    dragging.current = false;
+    dragEndTime.current = Date.now();
     setDragCard(null);
     setDragOverCol(null);
   };
@@ -231,17 +231,34 @@ const KanbanBoard = ({ userId, workspaceId }) => {
       return next;
     });
 
-    try {
-      await api.updateTask(card.taskId, { userId, kanbanId, status: toColId });
-    } catch (err) {
-      console.error('상태 변경 오류:', err);
-      // 실패 시 롤백
+    const rollback = () => {
       setCards((prev) => {
         const next = { ...prev };
         next[toColId]   = next[toColId].filter((c) => c.taskId !== card.taskId);
         next[fromColId] = [...next[fromColId], { ...card, status: fromColId }];
         return next;
       });
+    };
+
+    try {
+      const toDate = (val) => (val ? val.slice(0, 10) : null);
+      const result = await api.updateTask(card.taskId, {
+        userId,
+        kanbanId,
+        title: card.title,
+        content: card.content ?? '',
+        status: toColId,
+        startTime: toDate(card.startTime),
+        endTime: toDate(card.endTime),
+        managerId: card.managerId ?? null,
+      });
+      if (!result.success) {
+        rollback();
+        alert(result.message || '상태 변경에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('상태 변경 오류:', err);
+      rollback();
     }
   };
   // ────────────────────────────────────────────────────────────────────────────
@@ -317,7 +334,7 @@ const KanbanBoard = ({ userId, workspaceId }) => {
                         draggable
                         onDragStart={(e) => handleDragStart(e, card, col.id)}
                         onDragEnd={handleDragEnd}
-                        onClick={() => { if (!dragging.current) openEdit(col.id, card); }}
+                        onClick={() => { if (Date.now() - dragEndTime.current > 100) openEdit(col.id, card); }}
                         className={`cursor-grab rounded-xl border border-white/5 bg-slate-900 p-3 text-sm text-white transition select-none overflow-hidden max-h-40
                           hover:border-white/20 hover:bg-slate-800 active:cursor-grabbing
                           ${isBeingDragged ? 'opacity-30' : 'opacity-100'}`}
