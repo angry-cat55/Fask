@@ -15,6 +15,7 @@ const WorkspaceSettingsView = ({
     String(DEFAULT_SUMMARY_PERIOD),
   );
   const [autoTaskPeriod, setAutoTaskPeriod] = useState('');
+  const [masterNickname, setMasterNickname] = useState(null);
   const [nameLoading, setNameLoading] = useState(false);
   const [autoTaskLoading, setAutoTaskLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
@@ -54,6 +55,7 @@ const WorkspaceSettingsView = ({
         );
         if (ws) {
           setName(ws.name ?? '');
+          setMasterNickname(ws.masterNickname ?? null);
           const nextSummaryPeriod = ws.summary_period ?? ws.summaryPeriod;
           const nextAutoTaskPeriod = ws.auto_task_period ?? ws.autoTaskPeriod;
 
@@ -168,8 +170,12 @@ const WorkspaceSettingsView = ({
     }
   };
 
-  const inputClass =
-    'w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500 transition';
+  const isMaster = masterNickname !== null && user?.nickname === masterNickname;
+
+  const inputClass = (disabled) =>
+    `w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-sm text-white outline-none transition ${
+      disabled ? 'cursor-not-allowed opacity-50' : 'focus:border-cyan-500'
+    }`;
 
   return (
     <div className="flex flex-col items-center justify-start min-h-full p-8 overflow-y-auto bg-slate-950">
@@ -184,6 +190,12 @@ const WorkspaceSettingsView = ({
           <p className="text-sm text-red-400">{fetchError}</p>
         ) : (
           <>
+            {!isMaster && (
+              <div className="mb-5 rounded-lg border border-white/10 bg-slate-900 px-4 py-3 text-xs text-slate-500">
+                방장만 설정을 변경할 수 있습니다.
+              </div>
+            )}
+
             {/* 기본 정보 */}
             <div className="rounded-xl border border-white/10 bg-slate-900 mb-4">
               <div className="px-5 py-4 flex flex-col gap-3">
@@ -199,17 +211,20 @@ const WorkspaceSettingsView = ({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     maxLength={50}
-                    className={inputClass}
+                    disabled={!isMaster}
+                    className={inputClass(!isMaster)}
                     placeholder="워크스페이스 이름"
                   />
                 </div>
-                <button
-                  onClick={handleSaveName}
-                  disabled={nameLoading}
-                  className="self-end rounded-lg bg-cyan-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-cyan-400 disabled:opacity-50 transition"
-                >
-                  {nameLoading ? '저장 중...' : '저장'}
-                </button>
+                {isMaster && (
+                  <button
+                    onClick={handleSaveName}
+                    disabled={nameLoading}
+                    className="self-end rounded-lg bg-cyan-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-cyan-400 disabled:opacity-50 transition"
+                  >
+                    {nameLoading ? '저장 중...' : '저장'}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -226,6 +241,7 @@ const WorkspaceSettingsView = ({
                   <PeriodSelect
                     value={summaryPeriod}
                     onChange={setSummaryPeriod}
+                    disabled={!isMaster}
                   />
                   <p className="text-[11px] text-slate-600">
                     대화 내용을 자동 요약할 기준 주기입니다.
@@ -247,30 +263,33 @@ const WorkspaceSettingsView = ({
                   <PeriodSelect
                     value={autoTaskPeriod}
                     onChange={setAutoTaskPeriod}
+                    disabled={!isMaster}
                   />
                   <p className="text-[11px] text-slate-600">
                     요약을 기반으로 태스크를 자동 생성하는 주기입니다.
                   </p>
                 </div>
-                <button
-                  onClick={handleSaveAutoTaskPeriod}
-                  disabled={autoTaskLoading}
-                  className="self-end rounded-lg bg-cyan-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-cyan-400 disabled:opacity-50 transition"
-                >
-                  {autoTaskLoading ? '저장 중...' : '저장'}
-                </button>
+                {isMaster && (
+                  <button
+                    onClick={handleSaveAutoTaskPeriod}
+                    disabled={autoTaskLoading}
+                    className="self-end rounded-lg bg-cyan-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-cyan-400 disabled:opacity-50 transition"
+                  >
+                    {autoTaskLoading ? '저장 중...' : '저장'}
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* 워크스페이스 삭제 */}
-            {!showDeleteConfirm ? (
+            {/* 워크스페이스 삭제 — 방장만 표시 */}
+            {isMaster && !showDeleteConfirm ? (
               <button
                 onClick={() => setShowDeleteConfirm(true)}
                 className="w-full text-sm text-red-400 border border-red-400/30 rounded-xl py-3 hover:bg-red-500/10 transition"
               >
                 워크스페이스 삭제
               </button>
-            ) : (
+            ) : isMaster && (
               <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-5 flex flex-col gap-4">
                 <p className="text-sm text-red-300 font-medium">
                   정말로 워크스페이스를 삭제하시겠습니까?
